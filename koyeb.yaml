@@ -1,0 +1,28 @@
+version: v1
+name: agentledger-api
+services:
+  - name: api
+    type: web
+    github:
+      repository: 2434addy/AgentLedger
+      branch: main
+    build:
+      docker:
+        dockerfile: backend/Dockerfile
+    ports:
+      - port: 3001
+        protocol: http
+    health_checks:
+      - path: /health
+        port: 3001
+        interval: 30
+        timeout: 5
+    instance_types:
+      - type: free
+    regions:
+      - fra
+    env:
+      - key: PORT
+        value: "3001"
+      - key: NODE_ENV
+        value: production
