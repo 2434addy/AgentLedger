@@ -35,6 +35,9 @@ export class Agent {
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;
 
+  @Column({ type: 'timestamp', nullable: true })
+  lastSeenAt: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 

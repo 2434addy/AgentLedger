@@ -8,9 +8,10 @@ import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Badge, categoryVariant, levelVariant } from '@/components/ui/Badge';
+import { formatDate } from '@/lib/formatDate';
 
-const CATEGORIES = ['', 'llm_call', 'tool_invocation', 'error', 'user_action', 'agent_lifecycle', 'system'];
-const LEVELS = ['', 'debug', 'info', 'warn', 'error', 'critical'];
+const CATEGORIES = ['', 'llm_call', 'tool_invocation', 'user_action', 'agent_lifecycle', 'system', 'security', 'guardrail'];
+const LEVELS = ['', 'debug', 'info', 'warn', 'error', 'fatal'];
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -127,7 +128,7 @@ export default function EventsPage() {
                     className="hover:bg-white/[0.02] transition-colors"
                   >
                     <td className="px-5 py-3 text-white/50 text-xs whitespace-nowrap">
-                      {new Date(event.occurredAt).toLocaleString()}
+                      {formatDate(event.timestamp)}
                     </td>
                     <td className="px-5 py-3">
                       <Badge variant={categoryVariant(event.category)}>

@@ -8,6 +8,7 @@ import { sessionsApi, eventsApi, Session, Event } from '@/lib/api';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Badge, categoryVariant, levelVariant, statusVariant } from '@/components/ui/Badge';
+import { formatDate, formatTime } from '@/lib/formatDate';
 
 const categoryColors: Record<string, string> = {
   llm_call: 'rgba(124,58,237,0.15)',
@@ -16,6 +17,8 @@ const categoryColors: Record<string, string> = {
   user_action: 'rgba(245,158,11,0.15)',
   agent_lifecycle: 'rgba(16,185,129,0.15)',
   system: 'rgba(107,114,128,0.15)',
+  security: 'rgba(239,68,68,0.15)',
+  guardrail: 'rgba(245,158,11,0.15)',
 };
 
 const categoryBorderColors: Record<string, string> = {
@@ -25,6 +28,8 @@ const categoryBorderColors: Record<string, string> = {
   user_action: 'rgba(245,158,11,0.3)',
   agent_lifecycle: 'rgba(16,185,129,0.3)',
   system: 'rgba(107,114,128,0.3)',
+  security: 'rgba(239,68,68,0.3)',
+  guardrail: 'rgba(245,158,11,0.3)',
 };
 
 function JsonTree({ data, depth = 0 }: { data: unknown; depth?: number }) {
@@ -136,12 +141,12 @@ export default function SessionReplayPage() {
           </div>
           <div>
             <div className="text-white/40 text-xs mb-0.5">Started</div>
-            <div className="text-white/70 text-sm">{new Date(session.startedAt).toLocaleString()}</div>
+            <div className="text-white/70 text-sm">{formatDate(session.startedAt)}</div>
           </div>
           {session.endedAt && (
             <div>
               <div className="text-white/40 text-xs mb-0.5">Ended</div>
-              <div className="text-white/70 text-sm">{new Date(session.endedAt).toLocaleString()}</div>
+              <div className="text-white/70 text-sm">{formatDate(session.endedAt)}</div>
             </div>
           )}
           <div>
@@ -180,7 +185,7 @@ export default function SessionReplayPage() {
                     {event.category.replace('_', ' ')}
                   </Badge>
                   <span className="text-white/30 text-xs">
-                    {new Date(event.occurredAt).toLocaleTimeString()}
+                    {formatTime(event.timestamp)}
                   </span>
                 </div>
                 <div className="text-white/70 text-xs truncate">{event.message}</div>
@@ -219,7 +224,7 @@ export default function SessionReplayPage() {
                     </Badge>
                   </div>
                   <span className="text-white/40 text-xs">
-                    {new Date(selectedEvent.occurredAt).toLocaleString()}
+                    {formatDate(selectedEvent.timestamp)}
                   </span>
                 </div>
 
@@ -237,12 +242,12 @@ export default function SessionReplayPage() {
                       <div className="text-white/80 text-sm">{selectedEvent.latencyMs}ms</div>
                     </div>
                   )}
-                  {selectedEvent.tokenCount !== null && (
+                  {(selectedEvent.tokensInput !== null || selectedEvent.tokensOutput !== null) && (
                     <div>
                       <div className="flex items-center gap-1 text-white/40 text-xs mb-1">
                         <Zap className="w-3 h-3" /> Tokens
                       </div>
-                      <div className="text-white/80 text-sm">{selectedEvent.tokenCount}</div>
+                      <div className="text-white/80 text-sm">{(selectedEvent.tokensInput ?? 0) + (selectedEvent.tokensOutput ?? 0)}</div>
                     </div>
                   )}
                   {selectedEvent.costUsd !== null && (
@@ -250,7 +255,7 @@ export default function SessionReplayPage() {
                       <div className="flex items-center gap-1 text-white/40 text-xs mb-1">
                         <DollarSign className="w-3 h-3" /> Cost
                       </div>
-                      <div className="text-white/80 text-sm">${(selectedEvent.costUsd ?? 0).toFixed(6)}</div>
+                      <div className="text-white/80 text-sm">${(Number(selectedEvent.costUsd) || 0).toFixed(6)}</div>
                     </div>
                   )}
                 </div>

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { Session } from '../sessions/entities/session.entity';
+import { Agent, AgentStatus } from '../agents/entities/agent.entity';
 import { CreateEventsDto } from './dto/create-events.dto';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class EventsService {
   constructor(
     @InjectRepository(Event) private eventRepo: Repository<Event>,
     @InjectRepository(Session) private sessionRepo: Repository<Session>,
+    @InjectRepository(Agent) private agentRepo: Repository<Agent>,
   ) {}
 
   async listByOrg(orgId: string, filters: { sessionId?: string; agentId?: string; category?: string; level?: string }) {
@@ -26,11 +28,18 @@ export class EventsService {
   }
 
   async bulkCreate(orgId: string, dto: CreateEventsDto) {
-    const events = dto.events.map(e => this.eventRepo.create({ ...e, orgId }));
+    const events = dto.events.map(e => {
+      const { occurredAt, ...rest } = e;
+      return this.eventRepo.create({
+        ...rest,
+        orgId,
+        timestamp: occurredAt ? new Date(occurredAt) : new Date(),
+      });
+    });
     const saved = await this.eventRepo.save(events);
 
     // Update session totals — scoped to orgId to prevent cross-org manipulation
-    const sessionIds = [...new Set(saved.map(e => e.sessionId))];
+    const sessionIds = [...new Set(saved.map(e => e.sessionId).filter(Boolean))];
     for (const sessionId of sessionIds) {
       const result = await this.eventRepo
         .createQueryBuilder('event')
@@ -47,6 +56,20 @@ export class EventsService {
           totalCost: parseFloat(result.cost),
         })
         .where('id = :sessionId AND "orgId" = :orgId', { sessionId, orgId })
+        .execute();
+    }
+
+    // Update agent lastSeenAt and status
+    const agentIds = [...new Set(saved.map(e => e.agentId))];
+    for (const agentId of agentIds) {
+      await this.agentRepo
+        .createQueryBuilder()
+        .update()
+        .set({
+          lastSeenAt: new Date(),
+          status: AgentStatus.ACTIVE,
+        })
+        .where('id = :agentId AND "orgId" = :orgId', { agentId, orgId })
         .execute();
     }
 

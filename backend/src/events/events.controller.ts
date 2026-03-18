@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query, Req, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
-import { CreateEventsDto } from './dto/create-events.dto';
+import { CreateEventsDto, CreateEventItemDto } from './dto/create-events.dto';
 import { AuthRequest } from '../common/interfaces/request.interface';
 
 @Controller('events')
@@ -21,8 +21,13 @@ export class EventsController {
   }
 
   @Post()
-  create(@Req() req: AuthRequest, @Body() dto: CreateEventsDto) {
-    return this.eventsService.bulkCreate(req.user.orgId, dto);
+  create(@Req() req: AuthRequest, @Body() body: any) {
+    // Support both single event and batch format
+    if (body.events && Array.isArray(body.events)) {
+      return this.eventsService.bulkCreate(req.user.orgId, body as CreateEventsDto);
+    }
+    // Single event — wrap in batch format
+    return this.eventsService.bulkCreate(req.user.orgId, { events: [body] });
   }
 
   @Get(':id')

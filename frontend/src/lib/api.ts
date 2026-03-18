@@ -24,13 +24,13 @@ export interface AuthResponse {
 export interface ApiKey {
   id: string;
   name: string;
-  prefix: string;
+  keyPrefix: string;
   createdAt: string;
   lastUsedAt: string | null;
 }
 
 export interface ApiKeyCreated extends ApiKey {
-  rawKey: string;
+  key: string;
 }
 
 export interface Agent {
@@ -49,29 +49,35 @@ export interface Session {
   id: string;
   agentId: string;
   agent?: Agent;
-  status: 'active' | 'completed' | 'error' | 'aborted';
+  status: 'active' | 'completed' | 'failed' | 'timeout';
   startedAt: string;
   endedAt: string | null;
   metadata: Record<string, unknown> | null;
-  eventCount?: number;
-  totalCost?: number;
+  totalEvents?: number;
+  totalCost?: string | number;
 }
 
 export interface Event {
   id: string;
   sessionId: string;
   agentId: string;
-  category: 'llm_call' | 'tool_invocation' | 'error' | 'user_action' | 'agent_lifecycle' | 'system';
-  level: 'debug' | 'info' | 'warn' | 'error' | 'critical';
+  category: 'llm_call' | 'tool_invocation' | 'user_action' | 'agent_lifecycle' | 'system' | 'security' | 'guardrail';
+  level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
   message: string;
   payload: Record<string, unknown> | null;
   latencyMs: number | null;
-  tokenCount: number | null;
+  tokensInput: number | null;
+  tokensOutput: number | null;
   costUsd: number | null;
-  occurredAt: string;
-  createdAt: string;
+  timestamp: string;
 }
 
+// Backend returns raw SQL aggregation arrays — all numeric fields are strings
+export type UsageAnalyticsRaw = { category: string; count: string }[];
+export type CostAnalyticsRaw = { agentId: string; totalCost: string; eventCount: string }[];
+export type ModelAnalyticsRaw = { modelProvider: string; modelId: string; totalTokensInput: string; totalTokensOutput: string; totalCost: string; eventCount: string }[];
+
+// Keep structured types for frontend-processed data
 export interface CostAnalytics {
   totalCostUsd: number;
   byDate: { date: string; costUsd: number }[];
@@ -86,40 +92,35 @@ export interface UsageAnalytics {
   byCategory: { category: string; count: number }[];
 }
 
-export interface ModelAnalytics {
-  models: {
-    modelId: string;
-    provider: string;
-    callCount: number;
-    totalTokens: number;
-    totalCostUsd: number;
-  }[];
+// Backend returns { latencySpikes: Event[], errorBursts: [...], agentLoops: [...] }
+export interface AnomalyResponse {
+  latencySpikes: Event[];
+  errorBursts: { minute: string; error_count: string }[];
+  agentLoops: { sessionId: string; agentId: string; message: string; repeat_count: string }[];
 }
 
+// Normalized anomaly for UI display
 export interface Anomaly {
   id: string;
   type: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   agentId: string | null;
-  agentName: string | null;
   sessionId: string | null;
   detectedAt: string;
-  resolved: boolean;
 }
 
 export interface ComplianceReport {
-  score: number;
+  guardrailEvents: number;
+  securityEvents: number;
+  totalAuditLogs: number;
   generatedAt: string;
-  checks: ComplianceCheck[];
 }
 
 export interface ComplianceCheck {
-  id: string;
   name: string;
   description: string;
-  status: 'pass' | 'fail' | 'warning';
-  details: string | null;
+  status: 'pass' | 'warn' | 'fail';
 }
 
 export interface PaginatedResponse<T> {
@@ -277,18 +278,17 @@ export const eventsApi = {
 
 export const analyticsApi = {
   cost: (params?: { from?: string; to?: string }) =>
-    api.get<CostAnalytics>('/api/v1/analytics/cost', { params }),
+    api.get<CostAnalyticsRaw>('/api/v1/analytics/cost', { params }),
   usage: (params?: { from?: string; to?: string }) =>
-    api.get<UsageAnalytics>('/api/v1/analytics/usage', { params }),
+    api.get<UsageAnalyticsRaw>('/api/v1/analytics/usage', { params }),
   models: (params?: { from?: string; to?: string }) =>
-    api.get<ModelAnalytics>('/api/v1/analytics/models', { params }),
+    api.get<ModelAnalyticsRaw>('/api/v1/analytics/models', { params }),
 };
 
 // ─── Anomalies ────────────────────────────────────────────────────────────────
 
 export const anomaliesApi = {
-  list: (params?: { resolved?: boolean; severity?: string }) =>
-    api.get<Anomaly[]>('/api/v1/anomalies', { params }),
+  list: () => api.get<AnomalyResponse>('/api/v1/anomalies'),
 };
 
 // ─── Compliance ───────────────────────────────────────────────────────────────

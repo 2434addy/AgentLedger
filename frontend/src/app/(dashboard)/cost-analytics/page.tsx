@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Cell, Legend,
   BarChart, Bar,
 } from 'recharts';
-import { analyticsApi, CostAnalytics } from '@/lib/api';
+import { analyticsApi, eventsApi, CostAnalytics, Event } from '@/lib/api';
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 
@@ -35,8 +35,42 @@ export default function CostAnalyticsPage() {
     setIsLoading(true);
     setError('');
     try {
-      const res = await analyticsApi.cost();
-      setData(res.data);
+      const [costRes, modelsRes, eventsRes] = await Promise.all([
+        analyticsApi.cost(),
+        analyticsApi.models(),
+        eventsApi.list({ limit: 100 }),
+      ]);
+
+      // cost.data: Array<{ agentId, totalCost, eventCount }> (strings from SQL)
+      const costArr: { agentId: string; totalCost: string; eventCount: string }[] =
+        Array.isArray(costRes.data) ? costRes.data : [];
+      const totalCostUsd = costArr.reduce((s, i) => s + (parseFloat(i.totalCost) || 0), 0);
+      const byAgent = costArr.map((i) => ({
+        agentId: i.agentId,
+        agentName: i.agentId.slice(0, 8),
+        costUsd: parseFloat(i.totalCost) || 0,
+      }));
+
+      // models.data: Array<{ modelProvider, modelId, totalCost, ... }> (strings)
+      const modelsArr: { modelProvider: string; modelId: string; totalCost: string }[] =
+        Array.isArray(modelsRes.data) ? modelsRes.data : [];
+      const byModel = modelsArr.map((i) => ({
+        modelId: `${i.modelProvider}/${i.modelId}`,
+        costUsd: parseFloat(i.totalCost) || 0,
+      }));
+
+      // Build byDate from events (backend doesn't provide time-series)
+      const eventsList: Event[] = Array.isArray(eventsRes.data) ? eventsRes.data : [];
+      const dateMap: Record<string, number> = {};
+      eventsList.forEach((e) => {
+        const date = new Date(e.timestamp).toISOString().split('T')[0];
+        dateMap[date] = (dateMap[date] || 0) + (parseFloat(String(e.costUsd)) || 0);
+      });
+      const byDate = Object.entries(dateMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, costUsd]) => ({ date, costUsd }));
+
+      setData({ totalCostUsd, byDate, byModel, byAgent });
     } catch {
       setError('Failed to load cost analytics.');
     } finally {
@@ -90,7 +124,7 @@ export default function CostAnalyticsPage() {
         </div>
         <div>
           <div className="text-white/50 text-sm mb-1">Total Cost (All Time)</div>
-          <div className="text-4xl font-bold text-white">${(data?.totalCostUsd ?? 0).toFixed(4)}</div>
+          <div className="text-4xl font-bold text-white">${(Number(data?.totalCostUsd) || 0).toFixed(4)}</div>
         </div>
       </motion.div>
 

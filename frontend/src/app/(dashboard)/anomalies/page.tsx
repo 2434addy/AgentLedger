@@ -2,45 +2,87 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Clock } from 'lucide-react';
-import { anomaliesApi, Anomaly } from '@/lib/api';
+import { AlertTriangle, Clock, Zap, RotateCcw } from 'lucide-react';
+import { anomaliesApi, AnomalyResponse, Event } from '@/lib/api';
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Badge, severityVariant } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/Badge';
+import { formatDate } from '@/lib/formatDate';
 
-const severityIcon: Record<string, string> = {
-  low: '●',
-  medium: '●',
-  high: '●',
-  critical: '●',
-};
+interface NormalizedAnomaly {
+  id: string;
+  type: 'latency_spike' | 'error_burst' | 'agent_loop';
+  severity: 'medium' | 'high';
+  description: string;
+  detectedAt: string;
+}
+
+function normalizeAnomalies(data: AnomalyResponse): NormalizedAnomaly[] {
+  const result: NormalizedAnomaly[] = [];
+
+  (data.latencySpikes ?? []).forEach((e: Event) => {
+    result.push({
+      id: e.id,
+      type: 'latency_spike',
+      severity: 'medium',
+      description: `High latency (${e.latencyMs}ms) on "${e.message}"`,
+      detectedAt: e.timestamp,
+    });
+  });
+
+  (data.errorBursts ?? []).forEach((e, i) => {
+    result.push({
+      id: `burst-${i}`,
+      type: 'error_burst',
+      severity: 'high',
+      description: `${e.error_count} errors in one minute`,
+      detectedAt: e.minute,
+    });
+  });
+
+  (data.agentLoops ?? []).forEach((e, i) => {
+    result.push({
+      id: `loop-${i}`,
+      type: 'agent_loop',
+      severity: 'high',
+      description: `Tool "${e.message}" repeated ${e.repeat_count} times`,
+      detectedAt: '',
+    });
+  });
+
+  return result;
+}
 
 const severityColor: Record<string, string> = {
-  low: '#06B6D4',
   medium: '#F59E0B',
   high: '#EF4444',
-  critical: '#EF4444',
+};
+
+const typeIcons: Record<string, typeof AlertTriangle> = {
+  latency_spike: Zap,
+  error_burst: AlertTriangle,
+  agent_loop: RotateCcw,
 };
 
 export default function AnomaliesPage() {
-  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [anomalies, setAnomalies] = useState<NormalizedAnomaly[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showResolved, setShowResolved] = useState(false);
 
   const loadAnomalies = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
-      const res = await anomaliesApi.list({ resolved: showResolved ? undefined : false });
-      setAnomalies(Array.isArray(res.data) ? res.data : []);
+      const res = await anomaliesApi.list();
+      const data = res.data as AnomalyResponse;
+      setAnomalies(normalizeAnomalies(data));
     } catch {
       setError('Failed to load anomalies.');
     } finally {
       setIsLoading(false);
     }
-  }, [showResolved]);
+  }, []);
 
   useEffect(() => { loadAnomalies(); }, [loadAnomalies]);
 
@@ -55,87 +97,53 @@ export default function AnomaliesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-white font-bold text-xl">Anomaly Detection</h2>
-          <p className="text-white/40 text-sm mt-0.5">
-            {anomalies.length} {showResolved ? '' : 'active '}
-            {anomalies.length === 1 ? 'anomaly' : 'anomalies'}
-          </p>
-        </div>
-        <button
-          onClick={() => setShowResolved(!showResolved)}
-          className="text-sm px-4 py-2 rounded-xl border transition-colors"
-          style={{
-            borderColor: 'rgba(255,255,255,0.1)',
-            color: showResolved ? 'rgba(124,58,237,1)' : 'rgba(255,255,255,0.5)',
-            background: showResolved ? 'rgba(124,58,237,0.1)' : 'transparent',
-          }}
-        >
-          {showResolved ? 'Showing All' : 'Show Resolved'}
-        </button>
+      <div>
+        <h2 className="text-white font-bold text-xl">Anomaly Detection</h2>
+        <p className="text-white/40 text-sm mt-0.5">
+          {anomalies.length} {anomalies.length === 1 ? 'anomaly' : 'anomalies'} detected
+        </p>
       </div>
 
       {anomalies.length === 0 ? (
         <EmptyState
           icon={AlertTriangle}
           title="No anomalies detected"
-          description={showResolved
-            ? 'No anomalies have been detected for your agents.'
-            : 'All clear! No active anomalies. Your agents are behaving normally.'}
+          description="All clear! No anomalies detected. Your agents are behaving normally."
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {anomalies.map((anomaly, i) => (
-            <motion.div
-              key={anomaly.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
-              className="glass-card p-6"
-              style={
-                !anomaly.resolved
-                  ? { border: `1px solid ${severityColor[anomaly.severity]}30` }
-                  : {}
-              }
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span style={{ color: severityColor[anomaly.severity], fontSize: 8 }}>
-                    {severityIcon[anomaly.severity]}
-                  </span>
-                  <div className="text-white font-semibold text-sm capitalize">
-                    {anomaly.type.replace(/_/g, ' ')}
+          {anomalies.map((anomaly, i) => {
+            const Icon = typeIcons[anomaly.type] ?? AlertTriangle;
+            return (
+              <motion.div
+                key={anomaly.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07 }}
+                className="glass-card p-6"
+                style={{ border: `1px solid ${severityColor[anomaly.severity]}30` }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4" style={{ color: severityColor[anomaly.severity] }} />
+                    <div className="text-white font-semibold text-sm capitalize">
+                      {anomaly.type.replace(/_/g, ' ')}
+                    </div>
                   </div>
+                  <Badge variant={anomaly.severity === 'high' ? 'error' : 'warning'}>{anomaly.severity}</Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={severityVariant(anomaly.severity)}>{anomaly.severity}</Badge>
-                  {anomaly.resolved && (
-                    <Badge variant="success">resolved</Badge>
-                  )}
-                </div>
-              </div>
 
-              <p className="text-white/60 text-sm leading-relaxed mb-4">{anomaly.description}</p>
+                <p className="text-white/60 text-sm leading-relaxed mb-4">{anomaly.description}</p>
 
-              <div className="grid grid-cols-2 gap-3">
-                {anomaly.agentName && (
-                  <div>
-                    <div className="text-white/40 text-xs mb-0.5">Affected Agent</div>
-                    <div className="text-white/70 text-sm">{anomaly.agentName}</div>
+                {anomaly.detectedAt && (
+                  <div className="flex items-center gap-1 text-white/40 text-xs">
+                    <Clock className="w-3 h-3" />
+                    {formatDate(anomaly.detectedAt)}
                   </div>
                 )}
-                <div>
-                  <div className="flex items-center gap-1 text-white/40 text-xs mb-0.5">
-                    <Clock className="w-3 h-3" /> Detected
-                  </div>
-                  <div className="text-white/70 text-sm">
-                    {new Date(anomaly.detectedAt).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>
