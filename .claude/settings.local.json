@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(curl -s http://localhost:3001/api/v1)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNGQwN2ZkMi1iOTNkLTQ3MmItOTliMS05YmU4ZTZkMjFmN2EiLCJvcmdJZCI6ImY3MmM4NjY0LWE5ZDctNDA0Mi1iOTYyLTBmYzBjZTY1MGEyYyIsInJvbGUiOiJvd25lciIsImlhdCI6MTc3MzgyMzA4NSwiZXhwIjoxNzczODIzOTg1fQ.38ft0Ut8ac_CsLa-wNHjVU4aH2HtlECSLlsTd-LvY1Y\")",
+      "Bash(AUTH=\"Authorization: Bearer $TOKEN\")",
+      "Bash(__NEW_LINE_07ddd3a6e931a06d__ echo:*)",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" -X POST http://localhost:3001/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"audit20260318083800@test.com\"\",\"\"password\"\":\"\"TestPass123!\"\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" -X POST http://localhost:3001/api/v1/agents -H \"Content-Type: application/json\" -H \"$AUTH\" -d '{\"\"name\"\":\"\"Test Agent\"\",\"\"modelProvider\"\":\"\"anthropic\"\",\"\"modelId\"\":\"\"claude-opus-4-6\"\",\"\"description\"\":\"\"Automated test agent\"\"}')",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNGQwN2ZkMi1iOTNkLTQ3MmItOTliMS05YmU4ZTZkMjFmN2EiLCJvcmdJZCI6ImY3MmM4NjY0LWE5ZDctNDA0Mi1iOTYyLTBmYzBjZTY1MGEyYyIsInJvbGUiOiJvd25lciIsImlhdCI6MTc3MzgyMzA5OSwiZXhwIjoxNzczODIzOTk5fQ.off6ejZvExZLMH_-qzLOk-9ZoSLxy47gxXr5cs_uN6E\")",
+      "Bash(AGENT_ID=\"20a74209-1f0e-4835-ab52-22e8d22e6201\")",
+      "Bash(__NEW_LINE_274f9cbd3e13e28f__ echo:*)",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" -X POST http://localhost:3001/api/v1/sessions -H \"Content-Type: application/json\" -H \"$AUTH\" -d \"{\"\"agentId\"\":\"\"$AGENT_ID\"\"}\")",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" -X GET http://localhost:3001/api/v1/sessions -H \"$AUTH\")",
+      "Bash(__NEW_LINE_e8b08fa5816c4a16__ echo:*)",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" http://localhost:3001/api/v1/analytics/usage -H \"$AUTH\")",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" http://localhost:3001/api/v1/analytics/cost -H \"$AUTH\")",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" http://localhost:3001/api/v1/analytics/models -H \"$AUTH\")",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" http://localhost:3001/api/v1/anomalies -H \"$AUTH\")",
+      "Bash(PGPASSWORD=\"npg_P01sqloprIGt\" psql \"postgresql://neondb_owner:npg_P01sqloprIGt@ep-quiet-violet-a1epe2z3-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require\" -c \"\\\\d agents\")",
+      "Bash(node:*)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist)",
+      "Bash(taskkill:*)",
+      "Bash(npx nest:*)",
+      "Bash(echo \"TS_EXIT: $?\")",
+      "Bash(echo \"FRONTEND_TS: $?\")",
+      "Bash(echo \"BACKEND_TS: $?\")",
+      "Bash(PGPASSWORD=npg_P01sqloprIGt psql \"postgresql://neondb_owner:npg_P01sqloprIGt@ep-quiet-violet-a1epe2z3-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require\" -c 'ALTER TABLE events ALTER COLUMN \"\"sessionId\"\" DROP NOT NULL;')",
+      "Bash(npx ts-node -e \":*)",
+      "Bash(lsof -ti:3001)",
+      "Bash(xargs kill:*)",
+      "Bash(curl:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNmJmN2YzZi03ZmFjLTRlMTctYTVlNS0wM2UzNWY2ZmVmMWQiLCJvcmdJZCI6IjU3MjU1ODhhLWNiMmEtNGVhZS1hZTllLTMzYTgyNGM4YzA4MSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc3Mzg0MDI0MiwiZXhwIjoxNzczODQxMTQyfQ.u-8sS5VKQfqGXhBWMBrCjNjGjHTTb1-IlBtoyr7eHQ8\")",
+      "Bash(__NEW_LINE_acbf1ca593a6b348__ curl:*)",
+      "Bash(__NEW_LINE_7f70334289640ee0__ curl:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

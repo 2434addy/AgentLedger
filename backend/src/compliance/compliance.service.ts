@@ -27,15 +27,15 @@ export class ComplianceService {
   }
 
   async getChecks(orgId: string) {
-    const [hasGuardrails, hasAuditLogs, hasSecurityEvents] = await Promise.all([
+    const [hasGuardrails, hasUserActions, hasSecurityEvents] = await Promise.all([
       this.eventRepo.count({ where: { orgId, category: EventCategory.GUARDRAIL } }).then(c => c > 0),
-      this.auditRepo.count({ where: { orgId } }).then(c => c > 0),
+      this.eventRepo.count({ where: { orgId, category: EventCategory.USER_ACTION } }).then(c => c > 0),
       this.eventRepo.count({ where: { orgId, category: EventCategory.SECURITY } }).then(c => c > 0),
     ]);
 
     return [
       { name: 'Guardrail monitoring', status: hasGuardrails ? 'pass' : 'warn', description: 'Guardrail events are being logged' },
-      { name: 'Audit trail', status: hasAuditLogs ? 'pass' : 'warn', description: 'User actions are being audited' },
+      { name: 'Audit trail', status: hasUserActions ? 'pass' : 'warn', description: 'User actions are being audited' },
       { name: 'Security monitoring', status: hasSecurityEvents ? 'pass' : 'warn', description: 'Security events are being tracked' },
     ];
   }
