@@ -9,6 +9,7 @@ import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Badge, statusVariant } from '@/components/ui/Badge';
+import { formatDate } from '@/lib/formatDate';
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -88,15 +89,15 @@ export default function SessionsPage() {
                       <Clock className="w-3 h-3" /> Started
                     </div>
                     <div className="text-white/70 text-xs">
-                      {new Date(session.startedAt).toLocaleString()}
+                      {formatDate(session.startedAt)}
                     </div>
                   </div>
-                  {session.eventCount !== undefined && (
+                  {session.totalEvents !== undefined && (
                     <div>
                       <div className="flex items-center gap-1.5 text-white/40 text-xs mb-1">
                         <Zap className="w-3 h-3" /> Events
                       </div>
-                      <div className="text-white/70 text-xs">{session.eventCount}</div>
+                      <div className="text-white/70 text-xs">{session.totalEvents}</div>
                     </div>
                   )}
                   {session.totalCost !== undefined && (
@@ -104,7 +105,7 @@ export default function SessionsPage() {
                       <div className="flex items-center gap-1.5 text-white/40 text-xs mb-1">
                         <DollarSign className="w-3 h-3" /> Cost
                       </div>
-                      <div className="text-white/70 text-xs">${(session.totalCost ?? 0).toFixed(4)}</div>
+                      <div className="text-white/70 text-xs">${(Number(session.totalCost) || 0).toFixed(4)}</div>
                     </div>
                   )}
                 </div>

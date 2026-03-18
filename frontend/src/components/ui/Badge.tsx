@@ -33,8 +33,8 @@ export function statusVariant(status: string): BadgeVariant {
   switch (status) {
     case 'active': return 'success';
     case 'idle': return 'warning';
-    case 'error': return 'error';
-    case 'offline': return 'gray';
+    case 'error': case 'failed': return 'error';
+    case 'offline': case 'timeout': return 'gray';
     case 'completed': return 'success';
     case 'aborted': return 'error';
     default: return 'default';
@@ -49,6 +49,8 @@ export function categoryVariant(category: string): BadgeVariant {
     case 'user_action': return 'warning';
     case 'agent_lifecycle': return 'success';
     case 'system': return 'gray';
+    case 'security': return 'error';
+    case 'guardrail': return 'warning';
     default: return 'default';
   }
 }
@@ -59,7 +61,7 @@ export function levelVariant(level: string): BadgeVariant {
     case 'info': return 'info';
     case 'warn': return 'warning';
     case 'error': return 'error';
-    case 'critical': return 'error';
+    case 'critical': case 'fatal': return 'error';
     default: return 'default';
   }
 }

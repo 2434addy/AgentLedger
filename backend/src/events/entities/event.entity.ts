@@ -29,8 +29,8 @@ export class Event {
   @Column()
   orgId: string;
 
-  @Column()
-  sessionId: string;
+  @Column({ nullable: true })
+  sessionId: string | null;
 
   @Column()
   agentId: string;
@@ -74,3 +74,4 @@ export class Event {
   @JoinColumn({ name: 'agentId' })
   agent: Agent;
 }
+

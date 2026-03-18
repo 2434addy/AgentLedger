@@ -1,12 +1,31 @@
-# AgentLedger Production Deployment Guide
+# AgentLedger — Production Deployment Guide
 
-## Generated on: 2026-03-17
+## Deployment Stack (100% Free Forever)
+
+| Service   | Provider          | Tier         |
+|-----------|-------------------|--------------|
+| Backend   | Render.com        | Free         |
+| Frontend  | Cloudflare Pages  | Free         |
+| Database  | Neon PostgreSQL   | Free forever |
+| Redis     | Upstash           | Free forever |
+
+**Total cost: $0/month**
 
 ---
 
-## 1. Koyeb Backend Environment Variables
+## Step 1: Deploy Backend on Render.com
 
-Set these in Koyeb dashboard > Service > Environment Variables:
+1. Go to https://render.com → Sign up with GitHub (free, no credit card)
+2. Click **"New +"** → **"Web Service"**
+3. Connect GitHub → select **2434addy/AgentLedger**
+4. Configure settings:
+   - **Name:** `agentledger-api`
+   - **Root Directory:** `backend`
+   - **Runtime:** Node
+   - **Build Command:** `npm ci && npm run build`
+   - **Start Command:** `node dist/main`
+   - **Instance Type:** Free
+5. Add environment variables:
 
 | Variable | Value |
 |----------|-------|
@@ -14,84 +33,84 @@ Set these in Koyeb dashboard > Service > Environment Variables:
 | NODE_ENV | production |
 | DATABASE_URL | postgresql://neondb_owner:npg_P01sqloprIGt@ep-quiet-violet-a1epe2z3-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require |
 | REDIS_URL | rediss://default:gQAAAAAAARr1AAIncDIxOTlhMWQ5ODA0Mjc0N2ZmOGFhZGZkYThkMTc4YWVjOXAyNzI0Mzc@bold-silkworm-72437.upstash.io:6379 |
-| JWT_SECRET | 9e933fd2b276b5cdb9e8ee41e95ade96294f382a1e6cd231e1044210af5c76ff90ef5e4d83082f64b8ee14b44e08dd0e12db8af686d3a1243b389b7a813b06fb |
-| JWT_REFRESH_SECRET | 2a080ab66bcd8370bfb973f1bb87cdfe6623c00127d7c30732b1fc14a0f6a2265ac49d7effa55f4bb415192223dda523b1fbd3d7a529d6bdafd896344f16a936 |
+| JWT_SECRET | 9e933fd2b8c4a1e7d3f2a8b5c9d6e4f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7 |
+| JWT_REFRESH_SECRET | 2a080ab6c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0 |
 | JWT_EXPIRES_IN | 15m |
 | JWT_REFRESH_EXPIRES_IN | 7d |
 | CORS_ORIGIN | https://agentledger.pages.dev |
 | API_KEY_PREFIX | al_live_sk_ |
 
-## 2. Cloudflare Pages Frontend Environment Variables
+6. Click **"Create Web Service"**
+7. Wait for deploy (3-5 minutes)
+8. Test: `curl https://YOUR-URL.onrender.com/health`
 
-Set these in Cloudflare Pages dashboard > Settings > Environment Variables:
+---
+
+## Step 2: Deploy Frontend on Cloudflare Pages
+
+1. Go to https://dash.cloudflare.com
+2. **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+3. Select **2434addy/AgentLedger**
+4. Build settings:
+   - **Framework preset:** Next.js
+   - **Build command:** `cd frontend && npm ci && npm run build`
+   - **Build output directory:** `frontend/.next`
+   - **Root directory:** `/` (leave default)
+5. Environment variables:
 
 | Variable | Value |
 |----------|-------|
-| NEXT_PUBLIC_API_URL | https://YOUR-KOYEB-APP-NAME.koyeb.app |
+| NEXT_PUBLIC_API_URL | https://YOUR-RENDER-URL.onrender.com |
 
-(Replace YOUR-KOYEB-APP-NAME with your actual Koyeb service URL after deployment)
+6. Click **Deploy**
+7. Note your URL: `https://agentledger.pages.dev`
 
-## 3. Koyeb Backend Deployment Steps
+---
 
-1. Go to https://app.koyeb.com
-2. Click "Create Service"
-3. Select "GitHub" as source
-4. Connect your GitHub account if not already connected
-5. Select repository: `2434addy/AgentLedger`
-6. Set these build settings:
-   - **Builder**: Dockerfile
-   - **Dockerfile path**: `backend/Dockerfile`
-   - **Work directory**: `backend`
-7. Set **Port**: 3001
-8. Add ALL environment variables from Section 1 above
-9. Set **Instance type**: Free (nano)
-10. Set **Region**: Closest to your users
-11. Click "Deploy"
-12. Wait for build to complete — note the generated URL (e.g., `https://xxx.koyeb.app`)
-13. Test: `curl https://xxx.koyeb.app/health` should return `{"status":"ok"}`
+## Step 3: Post-Deployment Configuration
 
-## 4. Cloudflare Pages Frontend Deployment Steps
+1. **Update CORS on Render:** Set `CORS_ORIGIN` to your actual Cloudflare Pages URL (no trailing slash)
+2. **Migrations:** The backend auto-runs migrations on startup via TypeORM synchronize
+3. **Test full flow:**
+   - Visit your Cloudflare URL
+   - Sign up a new account
+   - Login should redirect to dashboard
+   - Create an agent
+   - Create a session
+   - Send test events via API
+   - Verify dashboard shows real data
+   - Test API key generation and usage
 
-1. Go to https://dash.cloudflare.com > Pages
-2. Click "Create a project"
-3. Select "Connect to Git"
-4. Select repository: `2434addy/AgentLedger`
-5. Set these build settings:
-   - **Framework preset**: Next.js
-   - **Build command**: `cd frontend && npm install --legacy-peer-deps && npm run build`
-   - **Build output directory**: `frontend/.next`
-   - **Root directory**: `/` (leave default)
-6. Add environment variable from Section 2 above:
-   - `NEXT_PUBLIC_API_URL` = `https://YOUR-KOYEB-URL.koyeb.app`
-7. Click "Save and Deploy"
-8. Once deployed, note the URL (e.g., `https://agentledger.pages.dev`)
-9. Go back to Koyeb and update `CORS_ORIGIN` to match the Cloudflare Pages URL
+---
 
-## 5. Post-Deployment Verification
-
-1. Open the Cloudflare Pages URL in browser
-2. Sign up with a new account
-3. Login should redirect to dashboard
-4. Create an agent, create a session, post events
-5. Verify dashboard shows the data
-6. Test API key generation and usage
-
-## 6. Important Notes
+## Important Notes
 
 - **Never commit .env files** — backend/.gitignore excludes them
 - **Rotate secrets** if you suspect they were exposed
 - **CORS_ORIGIN** must exactly match the frontend URL (no trailing slash)
 - **Database**: Neon free tier — no expiry, auto-suspend after 5min inactivity
 - **Redis**: Upstash free tier — 10,000 commands/day
-- **Total cost**: $0/month
+- **Render free tier**: Spins down after 15min inactivity, cold start ~30s
 
 ---
 
 ## Troubleshooting
 
-- Database connect error: check DATABASE_URL uses pooled string with ?pgbouncer=true
-- CORS error: CORS_ORIGIN on Koyeb must EXACTLY match Cloudflare Pages URL (no trailing slash)
-- Redis error: REDIS_URL must start with rediss:// (two s, TLS required)
-- Build fail on Cloudflare: check frontend/.npmrc has legacy-peer-deps=true
-- Build fail on Koyeb: check eslint is pinned to ^8.57.0 in frontend/package.json
-- SSL error on DB: ssl: { rejectUnauthorized: false } must be set in TypeORM config
+| Issue | Solution |
+|-------|----------|
+| Backend won't start | Check `DATABASE_URL` and `REDIS_URL` are set correctly |
+| CORS errors | Ensure `CORS_ORIGIN` matches your frontend URL exactly (no trailing slash) |
+| Auth failures | Verify `JWT_SECRET` and `JWT_REFRESH_SECRET` are set |
+| Database connection | Ensure Neon connection string uses pooler endpoint |
+| Redis connection | Ensure URL starts with `rediss://` (double s for TLS) |
+| Build fail on Cloudflare | Check frontend/.npmrc has `legacy-peer-deps=true` |
+| SSL error on DB | Ensure `ssl: { rejectUnauthorized: false }` in TypeORM config |
+
+---
+
+## Architecture
+
+```
+User → Cloudflare Pages (Next.js) → Render.com (NestJS) → Neon PostgreSQL
+                                                        → Upstash Redis
+```

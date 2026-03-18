@@ -8,6 +8,7 @@ import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Badge, statusVariant } from '@/components/ui/Badge';
+import { formatDate } from '@/lib/formatDate';
 
 function RegisterAgentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [name, setName] = useState('');
@@ -68,7 +69,7 @@ function RegisterAgentModal({ onClose, onCreated }: { onClose: () => void; onCre
           <div>
             <label className="block text-white/70 text-sm mb-1.5">Model Provider</label>
             <select value={modelProvider} onChange={(e) => setModelProvider(e.target.value)}
-              className="glass-input" style={{ appearance: 'none' }}>
+              className="glass-input">
               <option value="openai">OpenAI</option>
               <option value="anthropic">Anthropic</option>
               <option value="google">Google</option>
@@ -212,7 +213,7 @@ export default function AgentsPage() {
                       <Badge variant={statusVariant(agent.status)}>{agent.status}</Badge>
                     </td>
                     <td className="px-6 py-4 text-white/50 text-sm">
-                      {agent.lastSeenAt ? new Date(agent.lastSeenAt).toLocaleString() : 'Never'}
+                      {agent.lastSeenAt ? formatDate(agent.lastSeenAt) : 'Never'}
                     </td>
                     <td className="px-6 py-4 text-white/50 text-sm capitalize">{agent.modelProvider}</td>
                     <td className="px-6 py-4 text-right">

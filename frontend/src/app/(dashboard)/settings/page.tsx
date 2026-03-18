@@ -7,6 +7,7 @@ import { apiKeysApi, orgApi, ApiKey, ApiKeyCreated } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { formatDateOnly } from '@/lib/formatDate';
 
 function NewKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -196,7 +197,7 @@ export default function SettingsPage() {
   function handleKeyCreated(key: ApiKeyCreated) {
     setApiKeys((prev) => [key, ...prev]);
     setShowCreateModal(false);
-    setNewRawKey(key.rawKey);
+    setNewRawKey(key.key);
   }
 
   return (
@@ -299,10 +300,10 @@ export default function SettingsPage() {
                   <Key className="w-4 h-4 text-violet-400 flex-shrink-0" />
                   <div>
                     <div className="text-white/80 text-sm font-medium">{key.name}</div>
-                    <div className="text-white/40 text-xs font-mono">{key.prefix}••••••••••••••••</div>
+                    <div className="text-white/40 text-xs font-mono">{key.keyPrefix}••••••••••••••••</div>
                     <div className="text-white/30 text-xs mt-0.5">
-                      Created {new Date(key.createdAt).toLocaleDateString()}
-                      {key.lastUsedAt && ` · Last used ${new Date(key.lastUsedAt).toLocaleDateString()}`}
+                      Created {formatDateOnly(key.createdAt)}
+                      {key.lastUsedAt && ` · Last used ${formatDateOnly(key.lastUsedAt)}`}
                     </div>
                   </div>
                 </div>
