@@ -28,6 +28,27 @@ export class EventsService {
   }
 
   async bulkCreate(orgId: string, dto: CreateEventsDto) {
+    // Auto-create any sessions that don't exist yet
+    const sessionIds = [...new Set(dto.events.map(e => e.sessionId).filter(Boolean))] as string[];
+    if (sessionIds.length > 0) {
+      const existing = await this.sessionRepo
+        .createQueryBuilder('s')
+        .select('s.id')
+        .where('s.id IN (:...ids)', { ids: sessionIds })
+        .andWhere('s.orgId = :orgId', { orgId })
+        .getMany();
+      const existingIds = new Set(existing.map(s => s.id));
+      const missing = sessionIds.filter(id => !existingIds.has(id));
+      if (missing.length > 0) {
+        // Resolve agentId for each missing session from the event that references it
+        const sessionsToCreate = missing.map(sid => {
+          const event = dto.events.find(e => e.sessionId === sid)!;
+          return this.sessionRepo.create({ id: sid, orgId, agentId: event.agentId });
+        });
+        await this.sessionRepo.save(sessionsToCreate);
+      }
+    }
+
     const events = dto.events.map(e => {
       const { occurredAt, ...rest } = e;
       return this.eventRepo.create({
@@ -39,8 +60,8 @@ export class EventsService {
     const saved = await this.eventRepo.save(events);
 
     // Update session totals — scoped to orgId to prevent cross-org manipulation
-    const sessionIds = [...new Set(saved.map(e => e.sessionId).filter(Boolean))];
-    for (const sessionId of sessionIds) {
+    const savedSessionIds = [...new Set(saved.map(e => e.sessionId).filter(Boolean))];
+    for (const sessionId of savedSessionIds) {
       const result = await this.eventRepo
         .createQueryBuilder('event')
         .select('COUNT(*)', 'count')

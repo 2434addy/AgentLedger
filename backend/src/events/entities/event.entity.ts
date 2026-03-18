@@ -66,7 +66,7 @@ export class Event {
   @JoinColumn({ name: 'orgId' })
   organisation: Organisation;
 
-  @ManyToOne(() => Session, (session) => session.events)
+  @ManyToOne(() => Session, (session) => session.events, { nullable: true })
   @JoinColumn({ name: 'sessionId' })
   session: Session;
 

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx nest:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npx tsc:*)",
+      "Bash(cd:*)",
+      "Bash(rm -rf dist)",
+      "Bash(npm run:*)",
+      "Bash(rm -f tsconfig.build.tsbuildinfo)"
+    ]
+  }
+}
