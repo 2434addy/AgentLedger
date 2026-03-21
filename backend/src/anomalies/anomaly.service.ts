@@ -11,9 +11,9 @@ export class AnomalyService {
 
   async detectAnomalies(orgId: string) {
     const [latencySpikes, errorBursts, agentLoops] = await Promise.all([
-      this.detectLatencySpikes(orgId),
-      this.detectErrorBursts(orgId),
-      this.detectAgentLoops(orgId),
+      this.detectLatencySpikes(orgId).catch(() => []),
+      this.detectErrorBursts(orgId).catch(() => []),
+      this.detectAgentLoops(orgId).catch(() => []),
     ]);
     return { latencySpikes, errorBursts, agentLoops };
   }
@@ -28,34 +28,47 @@ export class AnomalyService {
     if (!avg?.avg) return [];
 
     return this.eventRepo.createQueryBuilder('event')
+      .select([
+        'event.id', 'event.orgId', 'event.sessionId', 'event.agentId',
+        'event.category', 'event.level', 'event.message', 'event.payload',
+        'event.tokensInput', 'event.tokensOutput', 'event.costUsd',
+        'event.latencyMs', 'event.timestamp', 'event.hash', 'event.tampered',
+        'event.stateBefore', 'event.stateAfter',
+      ])
       .where('event.orgId = :orgId', { orgId })
-      .andWhere('event.latencyMs > :threshold', { threshold: parseFloat(avg.avg) * 2 })
+      .andWhere('event.latencyMs > :threshold', { threshold: Math.round(parseFloat(avg.avg) * 2) })
       .orderBy('event.timestamp', 'DESC')
       .limit(20)
       .getMany();
   }
 
   private async detectErrorBursts(orgId: string) {
-    return this.eventRepo.query(`
-      SELECT date_trunc('minute', timestamp) AS minute, COUNT(*) AS error_count
-      FROM events
-      WHERE "orgId" = $1 AND level IN ('error', 'fatal')
-      GROUP BY minute
-      HAVING COUNT(*) > 5
-      ORDER BY minute DESC
-      LIMIT 20
-    `, [orgId]);
+    return this.eventRepo.createQueryBuilder('event')
+      .select("date_trunc('minute', event.timestamp)", 'minute')
+      .addSelect('COUNT(*)', 'error_count')
+      .where('event.orgId = :orgId', { orgId })
+      .andWhere('event.level IN (:...levels)', { levels: ['error', 'fatal'] })
+      .groupBy('minute')
+      .having('COUNT(*) > :threshold', { threshold: 5 })
+      .orderBy('minute', 'DESC')
+      .limit(20)
+      .getRawMany();
   }
 
   private async detectAgentLoops(orgId: string) {
-    return this.eventRepo.query(`
-      SELECT "sessionId", "agentId", message, COUNT(*) AS repeat_count
-      FROM events
-      WHERE "orgId" = $1 AND category = 'tool_invocation'
-      GROUP BY "sessionId", "agentId", message
-      HAVING COUNT(*) > 10
-      ORDER BY repeat_count DESC
-      LIMIT 20
-    `, [orgId]);
+    return this.eventRepo.createQueryBuilder('event')
+      .select('event.sessionId', 'sessionId')
+      .addSelect('event.agentId', 'agentId')
+      .addSelect('event.message', 'message')
+      .addSelect('COUNT(*)', 'repeat_count')
+      .where('event.orgId = :orgId', { orgId })
+      .andWhere('event.category = :category', { category: 'tool_invocation' })
+      .groupBy('event.sessionId')
+      .addGroupBy('event.agentId')
+      .addGroupBy('event.message')
+      .having('COUNT(*) > :threshold', { threshold: 10 })
+      .orderBy('repeat_count', 'DESC')
+      .limit(20)
+      .getRawMany();
   }
 }

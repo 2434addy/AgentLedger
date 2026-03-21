@@ -1,7 +1,8 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateSessionDto {
   @IsString()
+  @IsUUID('4')
   agentId: string;
 
   @IsOptional()

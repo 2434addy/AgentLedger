@@ -9,11 +9,27 @@ import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { formatDateOnly } from '@/lib/formatDate';
 
+function copyToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+  // Fallback for non-secure contexts or denied permission
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  return Promise.resolve();
+}
+
 function NewKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
 
   function copy() {
-    navigator.clipboard.writeText(rawKey);
+    copyToClipboard(rawKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

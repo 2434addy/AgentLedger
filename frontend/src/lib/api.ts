@@ -65,6 +65,8 @@ export interface Event {
   level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
   message: string;
   payload: Record<string, unknown> | null;
+  stateBefore: Record<string, unknown> | null;
+  stateAfter: Record<string, unknown> | null;
   latencyMs: number | null;
   tokensInput: number | null;
   tokensOutput: number | null;

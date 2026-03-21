@@ -1,13 +1,13 @@
-import { IsArray, ValidateNested, IsString, IsEnum, IsOptional, IsNumber, IsDateString, MaxLength } from 'class-validator';
+import { IsArray, ValidateNested, IsString, IsEnum, IsOptional, IsNumber, IsDateString, MaxLength, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EventCategory, EventLevel } from '../entities/event.entity';
 
 export class CreateEventItemDto {
-  @IsString()
+  @IsUUID('4')
   @IsOptional()
   sessionId?: string;
 
-  @IsString()
+  @IsUUID('4')
   agentId: string;
 
   @IsEnum(EventCategory)
@@ -38,6 +38,12 @@ export class CreateEventItemDto {
   @IsNumber()
   @IsOptional()
   latencyMs?: number;
+
+  @IsOptional()
+  stateBefore?: Record<string, unknown>;
+
+  @IsOptional()
+  stateAfter?: Record<string, unknown>;
 
   @IsDateString()
   @IsOptional()

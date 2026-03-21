@@ -1,10 +1,10 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { ComplianceService } from './compliance.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
 import { AuthRequest } from '../common/interfaces/request.interface';
 
 @Controller('compliance')
-@UseGuards(JwtAuthGuard)
+@UseGuards(CombinedAuthGuard)
 export class ComplianceController {
   constructor(private readonly complianceService: ComplianceService) {}
 
