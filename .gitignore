@@ -40,3 +40,13 @@ coverage/
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+
+# Doc generation dependencies
+docs/node_modules/
+docs/package-lock.json
+docs/package.json

@@ -14,9 +14,7 @@ import { AuditLog } from './audit-logs/entities/audit-log.entity';
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: { rejectUnauthorized: false },
   extra: { max: 5, idleTimeoutMillis: 30000 },
   entities: [Organisation, User, RefreshToken, ApiKey, Agent, Session, Event, AuditLog],
   migrations: ['src/migrations/*.ts'],
