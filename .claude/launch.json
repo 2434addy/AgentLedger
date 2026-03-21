@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "AgentLedger Backend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dist/main.js"],
+      "port": 3001,
+      "cwd": "backend",
+      "autoPort": false
+    },
+    {
+      "name": "AgentLedger Frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "cwd": "frontend",
+      "autoPort": false
+    }
+  ]
+}

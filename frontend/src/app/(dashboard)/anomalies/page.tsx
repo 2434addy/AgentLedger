@@ -76,9 +76,15 @@ export default function AnomaliesPage() {
     try {
       const res = await anomaliesApi.list();
       const data = res.data as AnomalyResponse;
-      setAnomalies(normalizeAnomalies(data));
-    } catch {
-      setError('Failed to load anomalies.');
+      const normalized = normalizeAnomalies({
+        latencySpikes: data?.latencySpikes ?? [],
+        errorBursts: data?.errorBursts ?? [],
+        agentLoops: data?.agentLoops ?? [],
+      });
+      setAnomalies(normalized);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Failed to load anomalies.');
     } finally {
       setIsLoading(false);
     }

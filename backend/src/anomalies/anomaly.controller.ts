@@ -1,10 +1,10 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AnomalyService } from './anomaly.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
 import { AuthRequest } from '../common/interfaces/request.interface';
 
 @Controller('anomalies')
-@UseGuards(JwtAuthGuard)
+@UseGuards(CombinedAuthGuard)
 export class AnomalyController {
   constructor(private readonly anomalyService: AnomalyService) {}
 

@@ -55,13 +55,13 @@ PHASE 5 — Deployment (READY)
 - puppeteer: Browser testing for qa-engineer and ux-designer
 
 ## Deployment Checklist (Phase 5)
-- [ ] Backend: Dockerfile created, Koyeb service configured
-- [ ] Backend: DATABASE_URL uses Neon pooled connection with ?pgbouncer=true
-- [ ] Backend: REDIS_URL set on Koyeb (starts with rediss://)
-- [ ] Backend: main.ts has NO fallback HTTP server
-- [ ] Backend: CORS_ORIGIN env var set to Cloudflare Pages URL
-- [ ] Frontend: .npmrc contains legacy-peer-deps=true
-- [ ] Frontend: package-lock.json regenerated from inside frontend/ directory
-- [ ] Frontend: eslint pinned to ^8.57.0 in package.json
-- [ ] Both: .env.example committed with all required env vars listed
-- [ ] Both: All secrets set in hosting platform env — never in code
+- [x] Backend: Dockerfile created, Koyeb service configured
+- [x] Backend: DATABASE_URL uses Neon pooled connection with ?pgbouncer=true
+- [x] Backend: REDIS_URL set on Koyeb (starts with rediss://)
+- [x] Backend: main.ts has NO fallback HTTP server
+- [x] Backend: CORS_ORIGIN env var set to Cloudflare Pages URL
+- [x] Frontend: .npmrc contains legacy-peer-deps=true
+- [x] Frontend: package-lock.json regenerated from inside frontend/ directory
+- [x] Frontend: eslint pinned to ^8.57.0 in package.json
+- [x] Both: .env.example committed with all required env vars listed
+- [ ] Both: All secrets set in hosting platform env — never in code (manual step)

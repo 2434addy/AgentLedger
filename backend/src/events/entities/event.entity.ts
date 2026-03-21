@@ -62,6 +62,18 @@ export class Event {
   @Column({ type: 'timestamp', default: () => 'NOW()' })
   timestamp: Date;
 
+  @Column({ type: 'jsonb', nullable: true })
+  stateBefore: Record<string, any> | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  stateAfter: Record<string, any> | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  hash: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  tampered: boolean;
+
   @ManyToOne(() => Organisation)
   @JoinColumn({ name: 'orgId' })
   organisation: Organisation;

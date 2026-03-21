@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Clock, Zap, DollarSign } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, Zap, DollarSign, Play, Pause, SkipForward, RotateCcw } from 'lucide-react';
 import { sessionsApi, eventsApi, Session, Event } from '@/lib/api';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -89,6 +89,19 @@ function JsonTree({ data, depth = 0 }: { data: unknown; depth?: number }) {
   return <span className="text-white/60">{String(data)}</span>;
 }
 
+function StatePanel({ label, state, color }: { label: string; state: Record<string, unknown> | null; color: string }) {
+  if (!state || Object.keys(state).length === 0) return null;
+  return (
+    <div>
+      <div className="text-xs mb-2" style={{ color }}>{label}</div>
+      <div className="rounded-xl p-3 text-xs font-mono overflow-auto max-h-48"
+        style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid ${color}33` }}>
+        <JsonTree data={state} />
+      </div>
+    </div>
+  );
+}
+
 export default function SessionReplayPage() {
   const { id } = useParams<{ id: string }>();
   const [session, setSession] = useState<Session | null>(null);
@@ -97,18 +110,38 @@ export default function SessionReplayPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Replay state
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [replayIndex, setReplayIndex] = useState(0);
+  const replayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
-      const [sessionRes, eventsRes] = await Promise.all([
-        sessionsApi.get(id),
-        eventsApi.list({ sessionId: id }),
-      ]);
-      setSession(sessionRes.data);
-      const evs = Array.isArray(eventsRes.data) ? eventsRes.data : [];
-      setEvents(evs);
-      if (evs.length > 0) setSelectedEvent(evs[0]);
+      let sessionData: Session | null = null;
+      try {
+        const sessionRes = await sessionsApi.get(id);
+        sessionData = sessionRes.data;
+      } catch {
+        setError('Failed to load session. Session may not exist or you lack access.');
+        setIsLoading(false);
+        return;
+      }
+      setSession(sessionData);
+
+      try {
+        const eventsRes = await eventsApi.list({ sessionId: id, limit: 500 });
+        const evs = Array.isArray(eventsRes.data) ? eventsRes.data : [];
+        // Sort chronologically (oldest first) for replay
+        evs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        setEvents(evs);
+        if (evs.length > 0) setSelectedEvent(evs[0]);
+      } catch {
+        // Session loaded but events failed - still show the session
+        setEvents([]);
+      }
     } catch {
       setError('Failed to load session.');
     } finally {
@@ -118,9 +151,81 @@ export default function SessionReplayPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Replay logic
+  const stopReplay = useCallback(() => {
+    setIsReplaying(false);
+    if (replayTimerRef.current) {
+      clearTimeout(replayTimerRef.current);
+      replayTimerRef.current = null;
+    }
+  }, []);
+
+  const advanceReplay = useCallback((index: number) => {
+    if (index >= events.length) {
+      stopReplay();
+      return;
+    }
+    setReplayIndex(index);
+    setSelectedEvent(events[index]);
+
+    // Scroll the timeline item into view
+    const el = document.getElementById(`event-${events[index].id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Compute delay: use real time gap between events, clamped to 0.3s–2s
+    let delay = 1000;
+    if (index + 1 < events.length) {
+      const gap = new Date(events[index + 1].timestamp).getTime() - new Date(events[index].timestamp).getTime();
+      delay = Math.min(2000, Math.max(300, gap));
+    }
+    replayTimerRef.current = setTimeout(() => advanceReplay(index + 1), delay);
+  }, [events, stopReplay]);
+
+  const startReplay = useCallback(() => {
+    if (events.length === 0) return;
+    setIsReplaying(true);
+    advanceReplay(0);
+  }, [events, advanceReplay]);
+
+  const toggleReplay = useCallback(() => {
+    if (isReplaying) {
+      stopReplay();
+    } else if (replayIndex >= events.length - 1) {
+      // Restart from beginning
+      startReplay();
+    } else {
+      // Resume from current position
+      setIsReplaying(true);
+      advanceReplay(replayIndex + 1);
+    }
+  }, [isReplaying, replayIndex, events, stopReplay, startReplay, advanceReplay]);
+
+  const resetReplay = useCallback(() => {
+    stopReplay();
+    setReplayIndex(0);
+    if (events.length > 0) setSelectedEvent(events[0]);
+  }, [stopReplay, events]);
+
+  const skipForward = useCallback(() => {
+    if (replayIndex + 1 < events.length) {
+      const next = replayIndex + 1;
+      setReplayIndex(next);
+      setSelectedEvent(events[next]);
+    }
+  }, [replayIndex, events]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
+    };
+  }, []);
+
   if (isLoading) return <TableSkeleton rows={6} />;
   if (error) return <ErrorState message={error} onRetry={loadData} />;
   if (!session) return null;
+
+  const hasStateData = events.some(e => e.stateBefore || e.stateAfter);
 
   return (
     <div className="space-y-4">
@@ -156,9 +261,57 @@ export default function SessionReplayPage() {
         </div>
       </div>
 
+      {/* Replay controls */}
+      <div className="glass-card p-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleReplay}
+            disabled={events.length === 0}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-30"
+            style={{
+              background: isReplaying ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)',
+              border: `1px solid ${isReplaying ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)'}`,
+              color: isReplaying ? '#f87171' : '#34d399',
+            }}
+          >
+            {isReplaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isReplaying ? 'Pause' : 'Replay'}
+          </button>
+          <button
+            onClick={skipForward}
+            disabled={events.length === 0 || replayIndex >= events.length - 1}
+            className="p-2 rounded-lg text-white/40 hover:text-white/80 transition-colors disabled:opacity-30"
+            title="Next event"
+          >
+            <SkipForward className="w-4 h-4" />
+          </button>
+          <button
+            onClick={resetReplay}
+            disabled={events.length === 0}
+            className="p-2 rounded-lg text-white/40 hover:text-white/80 transition-colors disabled:opacity-30"
+            title="Reset to start"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+          {/* Progress bar */}
+          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: events.length > 0 ? `${((replayIndex + 1) / events.length) * 100}%` : '0%',
+                background: 'linear-gradient(90deg, rgba(124,58,237,0.6), rgba(6,182,212,0.6))',
+              }}
+            />
+          </div>
+          <span className="text-white/40 text-xs font-mono min-w-[4rem] text-right">
+            {events.length > 0 ? `${replayIndex + 1} / ${events.length}` : '0 / 0'}
+          </span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Left: event timeline */}
-        <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+        <div ref={timelineRef} className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
           <div className="text-white/40 text-xs uppercase font-medium px-1 mb-3">Event Timeline</div>
           {events.length === 0 ? (
             <div className="text-center py-8 text-white/30 text-sm">No events in this session yet</div>
@@ -166,10 +319,14 @@ export default function SessionReplayPage() {
             events.map((event, i) => (
               <motion.button
                 key={event.id}
+                id={`event-${event.id}`}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
-                onClick={() => setSelectedEvent(event)}
+                onClick={() => {
+                  setSelectedEvent(event);
+                  setReplayIndex(i);
+                }}
                 className="w-full text-left rounded-xl p-3 transition-all"
                 style={{
                   background: selectedEvent?.id === event.id
@@ -178,6 +335,9 @@ export default function SessionReplayPage() {
                   border: `1px solid ${selectedEvent?.id === event.id
                     ? categoryBorderColors[event.category]
                     : 'rgba(255,255,255,0.06)'}`,
+                  boxShadow: isReplaying && replayIndex === i
+                    ? `0 0 12px ${categoryBorderColors[event.category]}`
+                    : 'none',
                 }}
               >
                 <div className="flex items-center justify-between mb-1.5">
@@ -189,11 +349,18 @@ export default function SessionReplayPage() {
                   </span>
                 </div>
                 <div className="text-white/70 text-xs truncate">{event.message}</div>
-                {event.latencyMs !== null && (
-                  <div className="flex items-center gap-1 mt-1.5 text-white/30 text-xs">
-                    <Clock className="w-2.5 h-2.5" /> {event.latencyMs}ms
-                  </div>
-                )}
+                <div className="flex items-center gap-2 mt-1.5">
+                  {event.latencyMs !== null && (
+                    <span className="flex items-center gap-1 text-white/30 text-xs">
+                      <Clock className="w-2.5 h-2.5" /> {event.latencyMs}ms
+                    </span>
+                  )}
+                  {(event.stateBefore || event.stateAfter) && (
+                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.2)', color: 'rgba(167,139,250,0.8)' }}>
+                      state
+                    </span>
+                  )}
+                </div>
               </motion.button>
             ))
           )}
@@ -259,6 +426,14 @@ export default function SessionReplayPage() {
                     </div>
                   )}
                 </div>
+
+                {/* State snapshots */}
+                {(selectedEvent.stateBefore || selectedEvent.stateAfter) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <StatePanel label="State Before" state={selectedEvent.stateBefore} color="rgba(245,158,11,0.8)" />
+                    <StatePanel label="State After" state={selectedEvent.stateAfter} color="rgba(16,185,129,0.8)" />
+                  </div>
+                )}
 
                 {selectedEvent.payload && Object.keys(selectedEvent.payload).length > 0 && (
                   <div>

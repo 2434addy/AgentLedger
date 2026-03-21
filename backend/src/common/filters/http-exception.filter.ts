@@ -17,7 +17,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const res = exception.getResponse();
       message = typeof res === 'string' ? res : res;
     } else {
-      this.logger.error('Unhandled exception', exception instanceof Error ? exception.stack : exception);
+      // Only log stack traces in development; log message-only in production
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.error('Unhandled exception', exception instanceof Error ? exception.message : 'Unknown error');
+      } else {
+        this.logger.error('Unhandled exception', exception instanceof Error ? exception.stack : exception);
+      }
     }
 
     response.status(status).json(

@@ -37,16 +37,16 @@ export class AnalyticsService {
 
   async getModelStats(orgId: string) {
     return this.eventRepo.createQueryBuilder('event')
-      .innerJoin('event.agent', 'agent')
-      .select('agent.modelProvider', 'modelProvider')
-      .addSelect('agent.modelId', 'modelId')
+      .leftJoin('event.agent', 'agent')
+      .select("COALESCE(agent.modelProvider, 'unknown')", 'modelProvider')
+      .addSelect("COALESCE(agent.modelId, 'unknown')", 'modelId')
       .addSelect('SUM(event.tokensInput)', 'totalTokensInput')
       .addSelect('SUM(event.tokensOutput)', 'totalTokensOutput')
       .addSelect('SUM(event.costUsd)', 'totalCost')
       .addSelect('COUNT(*)', 'eventCount')
       .where('event.orgId = :orgId', { orgId })
-      .groupBy('agent.modelProvider')
-      .addGroupBy('agent.modelId')
+      .groupBy("COALESCE(agent.modelProvider, 'unknown')")
+      .addGroupBy("COALESCE(agent.modelId, 'unknown')")
       .getRawMany();
   }
 }

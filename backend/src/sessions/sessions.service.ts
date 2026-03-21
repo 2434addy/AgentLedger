@@ -14,7 +14,7 @@ export class SessionsService {
   async listByOrg(orgId: string, agentId?: string) {
     const where: any = { orgId };
     if (agentId) where.agentId = agentId;
-    return this.sessionRepo.find({ where, order: { startedAt: 'DESC' } });
+    return this.sessionRepo.find({ where, relations: ['agent'], order: { startedAt: 'DESC' } });
   }
 
   async create(orgId: string, dto: CreateSessionDto) {
@@ -22,7 +22,7 @@ export class SessionsService {
   }
 
   async findOne(orgId: string, id: string) {
-    const session = await this.sessionRepo.findOne({ where: { id, orgId } });
+    const session = await this.sessionRepo.findOne({ where: { id, orgId }, relations: ['agent'] });
     if (!session) throw new NotFoundException('Session not found');
     return session;
   }

@@ -35,15 +35,19 @@ export default function CostAnalyticsPage() {
     setIsLoading(true);
     setError('');
     try {
-      const [costRes, modelsRes, eventsRes] = await Promise.all([
+      const results = await Promise.allSettled([
         analyticsApi.cost(),
         analyticsApi.models(),
         eventsApi.list({ limit: 100 }),
       ]);
 
+      const costRes = results[0].status === 'fulfilled' ? results[0].value : null;
+      const modelsRes = results[1].status === 'fulfilled' ? results[1].value : null;
+      const eventsRes = results[2].status === 'fulfilled' ? results[2].value : null;
+
       // cost.data: Array<{ agentId, totalCost, eventCount }> (strings from SQL)
       const costArr: { agentId: string; totalCost: string; eventCount: string }[] =
-        Array.isArray(costRes.data) ? costRes.data : [];
+        Array.isArray(costRes?.data) ? costRes.data : [];
       const totalCostUsd = costArr.reduce((s, i) => s + (parseFloat(i.totalCost) || 0), 0);
       const byAgent = costArr.map((i) => ({
         agentId: i.agentId,
@@ -53,14 +57,14 @@ export default function CostAnalyticsPage() {
 
       // models.data: Array<{ modelProvider, modelId, totalCost, ... }> (strings)
       const modelsArr: { modelProvider: string; modelId: string; totalCost: string }[] =
-        Array.isArray(modelsRes.data) ? modelsRes.data : [];
+        Array.isArray(modelsRes?.data) ? modelsRes.data : [];
       const byModel = modelsArr.map((i) => ({
         modelId: `${i.modelProvider}/${i.modelId}`,
         costUsd: parseFloat(i.totalCost) || 0,
       }));
 
       // Build byDate from events (backend doesn't provide time-series)
-      const eventsList: Event[] = Array.isArray(eventsRes.data) ? eventsRes.data : [];
+      const eventsList: Event[] = Array.isArray(eventsRes?.data) ? eventsRes.data : [];
       const dateMap: Record<string, number> = {};
       eventsList.forEach((e) => {
         const date = new Date(e.timestamp).toISOString().split('T')[0];

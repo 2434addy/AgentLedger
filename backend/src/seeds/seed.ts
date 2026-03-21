@@ -11,6 +11,7 @@ import { Agent, AgentStatus } from '../agents/entities/agent.entity';
 import { Session, SessionStatus } from '../sessions/entities/session.entity';
 import { Event, EventCategory, EventLevel } from '../events/entities/event.entity';
 import { AuditLog } from '../audit-logs/entities/audit-log.entity';
+import { computeEventHash } from '../events/event-hash.util';
 
 const dataSource = new DataSource({
   type: 'postgres',
@@ -44,7 +45,12 @@ async function seed() {
   // 2. User
   let user = await userRepo.findOne({ where: { email: 'demo@agentledger.io' } });
   if (!user) {
-    const passwordHash = await bcrypt.hash('Demo@2026!', 12);
+    const demoPassword = process.env.DEMO_PASSWORD;
+    if (!demoPassword) {
+      console.error('DEMO_PASSWORD env var is required for seeding');
+      process.exit(1);
+    }
+    const passwordHash = await bcrypt.hash(demoPassword, 12);
     user = userRepo.create({
       orgId: org.id,
       email: 'demo@agentledger.io',
@@ -114,21 +120,52 @@ async function seed() {
     const levels = Object.values(EventLevel);
     const events: Partial<Event>[] = [];
 
+    // Sample state shapes for seed data
+    const sampleStates = [
+      { status: 'idle', memory: { context: [] }, toolsAvailable: ['search', 'read', 'write'] },
+      { status: 'thinking', memory: { context: ['user asked a question'] }, toolsAvailable: ['search', 'read', 'write'] },
+      { status: 'executing', memory: { context: ['user asked a question', 'found relevant docs'] }, currentTool: 'search', toolsAvailable: ['search', 'read', 'write'] },
+      { status: 'responding', memory: { context: ['user asked a question', 'found relevant docs', 'composed answer'] }, tokensUsed: 1234, toolsAvailable: ['search', 'read', 'write'] },
+      { status: 'idle', memory: { context: ['user asked a question', 'found relevant docs', 'composed answer', 'delivered response'] }, tokensUsed: 1580, toolsAvailable: ['search', 'read', 'write'] },
+    ];
+
     for (let i = 0; i < 20; i++) {
       const sessionIdx = i % 5;
       const session = sessions[sessionIdx];
       const agentIdx = sessionDefs[sessionIdx].agentIdx;
+      const category = categories[i % categories.length];
+      const level = levels[i % levels.length];
+      const message = `Event ${i + 1}: ${category} at ${level} level`;
+      const timestamp = new Date();
+      const payload = null;
+      const stateBefore = sampleStates[i % sampleStates.length];
+      const stateAfter = sampleStates[(i + 1) % sampleStates.length];
+      const hash = computeEventHash({
+        agentId: agents[agentIdx].id,
+        category,
+        level,
+        message,
+        timestamp,
+        payload,
+        stateBefore,
+        stateAfter,
+      });
       events.push({
         orgId: org.id,
         sessionId: session.id,
         agentId: agents[agentIdx].id,
-        category: categories[i % categories.length],
-        level: levels[i % levels.length],
-        message: `Event ${i + 1}: ${categories[i % categories.length]} at ${levels[i % levels.length]} level`,
+        category,
+        level,
+        message,
         tokensInput: Math.floor(Math.random() * 2000) + 100,
         tokensOutput: Math.floor(Math.random() * 1000) + 50,
         costUsd: parseFloat((Math.random() * 0.05).toFixed(6)),
         latencyMs: Math.floor(Math.random() * 5000) + 100,
+        timestamp,
+        stateBefore,
+        stateAfter,
+        hash,
+        tampered: false,
       });
     }
 

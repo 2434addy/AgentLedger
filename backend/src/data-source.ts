@@ -15,8 +15,8 @@ export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: true }
-    : { rejectUnauthorized: false },
+    ? { rejectUnauthorized: false }
+    : false,
   extra: { max: 5, idleTimeoutMillis: 30000 },
   entities: [Organisation, User, RefreshToken, ApiKey, Agent, Session, Event, AuditLog],
   migrations: ['src/migrations/*.ts'],
