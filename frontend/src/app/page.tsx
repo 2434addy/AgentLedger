@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Shield, Zap, BarChart3, Search, Lock, Bell, ArrowRight, Check, UserCheck, CheckCircle, Fingerprint, AlertTriangle, FileText, Download } from 'lucide-react';
+import { Shield, Zap, BarChart3, Search, Lock, Bell, ArrowRight, Check, UserCheck, CheckCircle, Fingerprint, AlertTriangle, FileText, Download, Copy, ExternalLink } from 'lucide-react';
 
 const features = [
   {
@@ -127,8 +127,163 @@ const auditBlocks = [
   { action: 'db_write', hash: 'd1f5e2a7', prev: 'c9a4b3e8', time: '10:42:11' },
 ];
 
+/* ── SDK Code Snippets Data ── */
+const sdkTabs = [
+  {
+    id: 'openai',
+    label: 'OpenAI Agents',
+    language: 'typescript',
+    code: `import { AgentLedger } from '@agentledger/sdk';
+
+const ledger = new AgentLedger({ apiKey: 'al_your_key' });
+
+const agent = ledger.wrap('gpt-4o-agent', async (input) => {
+  return await openai.chat.completions.create({ ... });
+});
+
+// Every call is now SHA-256 hashed, logged, and EU AI Act ready
+await agent.run({ task: 'Analyze customer data' });`,
+  },
+  {
+    id: 'langchain',
+    label: 'LangChain',
+    language: 'typescript',
+    code: `import { AgentLedger } from '@agentledger/sdk';
+import { AgentExecutor } from 'langchain/agents';
+
+const ledger = new AgentLedger({ apiKey: 'al_your_key' });
+
+// Drop into any existing LangChain agent — zero refactoring
+const trackedExecutor = ledger.wrap('langchain-agent', executor);
+
+await trackedExecutor.invoke({ input: 'Summarize sales report' });
+// Tamper-proof audit trail generated automatically ✓`,
+  },
+  {
+    id: 'crewai',
+    label: 'CrewAI',
+    language: 'typescript',
+    code: `import { AgentLedger } from '@agentledger/sdk';
+import { Crew } from 'crewai';
+
+const ledger = new AgentLedger({ apiKey: 'al_your_key' });
+
+const crew = new Crew({ agents: [...], tasks: [...] });
+
+// Wrap your entire crew — all agents tracked in one session
+const session = await ledger.session('market-research-crew', () =>
+  crew.kickoff({ inputs: { topic: 'Q1 Sales' } })
+);
+// Human approval queue activated for high-risk actions ✓`,
+  },
+  {
+    id: 'rest',
+    label: 'Custom / REST API',
+    language: 'bash',
+    code: `# Works with ANY agent — curl, Python, Go, anything
+
+curl -X POST https://api.agentledger.io/v1/events \\
+  -H "Authorization: Bearer al_your_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "agent_id": "my-custom-agent",
+    "action": "send_email",
+    "payload": { "to": "user@co.com" },
+    "risk_level": "high"
+  }'
+
+# Response includes SHA-256 hash + approval status
+# { "hash": "sha256:a3f8c2...", "status": "PENDING_APPROVAL" }`,
+  },
+];
+
+/* ── Competitor Comparison Data ── */
+const comparisonRows = [
+  { feature: 'EU AI Act Compliance Reports', agentledger: { text: 'Included', status: 'yes' }, langsmith: { text: 'Enterprise only', status: 'no' }, langfuse: { text: 'Not available', status: 'no' } },
+  { feature: 'SOC 2 Type II Reports', agentledger: { text: 'Included', status: 'yes' }, langsmith: { text: 'Enterprise only', status: 'no' }, langfuse: { text: 'Not available', status: 'no' } },
+  { feature: 'ISO 42001 Reports', agentledger: { text: 'Included', status: 'yes' }, langsmith: { text: 'Enterprise only', status: 'no' }, langfuse: { text: 'Not available', status: 'no' } },
+  { feature: 'Human-in-Loop Approval Queue', agentledger: { text: 'Included', status: 'yes' }, langsmith: { text: 'Not available', status: 'no' }, langfuse: { text: 'Not available', status: 'no' } },
+  { feature: 'Tamper-Proof SHA-256 Audit Chain', agentledger: { text: 'Included', status: 'yes' }, langsmith: { text: 'Not available', status: 'no' }, langfuse: { text: 'Not available', status: 'no' } },
+  { feature: 'Agent Rollback Engine', agentledger: { text: 'Included', status: 'yes' }, langsmith: { text: 'Not available', status: 'no' }, langfuse: { text: 'Not available', status: 'no' } },
+  { feature: 'One-Click Compliance Export', agentledger: { text: 'Included', status: 'yes' }, langsmith: { text: 'Enterprise only', status: 'no' }, langfuse: { text: 'Not available', status: 'no' } },
+  { feature: 'Works with ANY Framework', agentledger: { text: 'Yes', status: 'yes' }, langsmith: { text: 'LangChain only', status: 'warn' }, langfuse: { text: 'Yes', status: 'yes' } },
+  { feature: 'Retention (base plan)', agentledger: { text: '90 days', status: 'yes' }, langsmith: { text: '14 days only', status: 'warn' }, langfuse: { text: '60 days', status: 'yes' } },
+  { feature: 'Pricing', agentledger: { text: '$29/month', status: 'yes' }, langsmith: { text: '~$100K/year', status: 'no' }, langfuse: { text: '$29/month', status: 'yes' } },
+];
+
+/* ── Syntax Highlighting Helper ── */
+function SyntaxHighlight({ code, language }: { code: string; language: string }) {
+  if (language === 'bash') {
+    return (
+      <>
+        {code.split('\n').map((line, i) => {
+          if (line.trimStart().startsWith('#')) {
+            return <span key={i} className="block" style={{ color: '#6A737D', fontStyle: 'italic' }}>{line}{'\n'}</span>;
+          }
+          // Highlight strings in quotes
+          const parts = line.split(/(["'][^"']*["'])/g);
+          return (
+            <span key={i} className="block">
+              {parts.map((part, j) => {
+                if (/^["']/.test(part)) return <span key={j} style={{ color: '#A5D6FF' }}>{part}</span>;
+                // Highlight flags/options
+                const flagParts = part.split(/(-[A-Za-z]+)/g);
+                return flagParts.map((fp, k) => {
+                  if (/^-[A-Za-z]/.test(fp)) return <span key={k} style={{ color: '#D2A8FF' }}>{fp}</span>;
+                  return <span key={k} style={{ color: '#E6EDF3' }}>{fp}</span>;
+                });
+              })}
+              {'\n'}
+            </span>
+          );
+        })}
+      </>
+    );
+  }
+
+  // TypeScript highlighting
+  return (
+    <>
+      {code.split('\n').map((line, i) => {
+        // Comments
+        if (line.trimStart().startsWith('//')) {
+          return <span key={i} className="block" style={{ color: '#6A737D', fontStyle: 'italic' }}>{line}{'\n'}</span>;
+        }
+
+        // Process tokens
+        const tokens = line.split(/(\b(?:import|from|const|let|var|async|await|return|new|function)\b|'[^']*'|"[^"]*"|`[^`]*`|\{|\}|\(|\)|=>|\.\.\.)/g);
+        return (
+          <span key={i} className="block">
+            {tokens.map((token, j) => {
+              // Keywords
+              if (/^(import|from|const|let|var|async|await|return|new|function)$/.test(token)) {
+                return <span key={j} style={{ color: '#D2A8FF' }}>{token}</span>;
+              }
+              // Strings
+              if (/^['"`]/.test(token)) {
+                return <span key={j} style={{ color: '#A5D6FF' }}>{token}</span>;
+              }
+              // Default
+              return <span key={j} style={{ color: '#E6EDF3' }}>{token}</span>;
+            })}
+            {'\n'}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 export default function LandingPage() {
   const [tamperedBlock, setTamperedBlock] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState('openai');
+  const [copiedTab, setCopiedTab] = useState<string | null>(null);
+
+  const copyCode = useCallback((tabId: string, code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedTab(tabId);
+    setTimeout(() => setCopiedTab(null), 2000);
+  }, []);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -299,6 +454,112 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════ */}
+      {/* Framework-Agnostic SDK Code Snippets           */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Works With Every Framework.{' '}
+              <span style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                Not Just LangChain.
+              </span>
+            </h2>
+            <p className="text-white/50 text-lg">5 lines of code. Any agent framework. Full compliance coverage.</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative rounded-2xl overflow-hidden"
+            style={{
+              padding: '1px',
+              background: 'linear-gradient(135deg, rgba(124,58,237,0.5), rgba(6,182,212,0.3), rgba(124,58,237,0.5))',
+              backgroundSize: '200% 200%',
+              animation: 'gradientShift 4s ease infinite',
+            }}
+          >
+            <div className="rounded-2xl overflow-hidden" style={{ background: '#0d1117' }}>
+              {/* Tabs */}
+              <div className="flex overflow-x-auto" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(13,17,23,0.95)' }}>
+                {sdkTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="relative px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors"
+                    style={{
+                      color: activeTab === tab.id ? '#E6EDF3' : 'rgba(230,237,243,0.5)',
+                      background: activeTab === tab.id ? 'rgba(124,58,237,0.08)' : 'transparent',
+                    }}
+                  >
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="activeTabIndicator"
+                        className="absolute bottom-0 left-0 right-0 h-0.5"
+                        style={{ background: 'linear-gradient(90deg, #7C3AED, #06B6D4)' }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Code Block */}
+              {sdkTabs.map((tab) => (
+                tab.id === activeTab && (
+                  <div key={tab.id} className="relative">
+                    {/* Copy button */}
+                    <button
+                      onClick={() => copyCode(tab.id, tab.code)}
+                      className="absolute top-3 right-3 p-2 rounded-lg transition-all z-10"
+                      style={{
+                        background: copiedTab === tab.id ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)',
+                        border: copiedTab === tab.id ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      }}
+                      title="Copy code"
+                    >
+                      {copiedTab === tab.id ? (
+                        <Check className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-white/50" />
+                      )}
+                    </button>
+
+                    <pre className="p-5 pr-14 overflow-x-auto text-sm leading-relaxed font-mono" style={{ background: '#0d1117' }}>
+                      <code>
+                        <SyntaxHighlight code={tab.code} language={tab.language} />
+                      </code>
+                    </pre>
+                  </div>
+                )
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Bottom note */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-6 text-center"
+          >
+            <p className="text-white/40 text-sm">
+              Don&apos;t see your framework? AgentLedger works with any framework via REST API.{' '}
+              <a href="#" className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors">
+                View full SDK docs <ExternalLink className="w-3 h-3" />
+              </a>
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
@@ -362,6 +623,257 @@ export default function LandingPage() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Built for Compliance / Human-in-Loop */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">Built for Compliance, Not Just Observability</h2>
+            <p className="text-white/50 text-lg">The only agent platform with a built-in human approval workflow</p>
+          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Approval Queue Mockup */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="glass-card p-0 overflow-hidden"
+            >
+              {/* Mockup header */}
+              <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className="text-white font-semibold text-sm">Approval Queue</span>
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  3 PENDING
+                </span>
+              </div>
+
+              {/* Queue item 1 */}
+              <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(245,158,11,0.03)' }}>
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white text-sm font-medium">finance-agent</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>HIGH</span>
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                        style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>
+                        <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse" />
+                        PENDING REVIEW
+                      </span>
+                    </div>
+                    <p className="text-white/40 text-xs">Execute wire transfer of $48,200 to vendor account</p>
+                  </div>
+                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">2m ago</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
+                </div>
+              </div>
+
+              {/* Queue item 2 */}
+              <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white text-sm font-medium">support-agent</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>MEDIUM</span>
+                    </div>
+                    <p className="text-white/40 text-xs">Send account credentials reset to user@client.com</p>
+                  </div>
+                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">5m ago</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
+                </div>
+              </div>
+
+              {/* Queue item 3 */}
+              <div className="px-5 py-4">
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white text-sm font-medium">data-agent</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>HIGH</span>
+                    </div>
+                    <p className="text-white/40 text-xs">Delete 12,400 records from production database</p>
+                  </div>
+                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">8m ago</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right: Bullet points + CTA */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <h3 className="text-2xl font-bold text-white mb-3">Human oversight where it matters most</h3>
+              <p className="text-white/50 mb-8 leading-relaxed">
+                High-risk AI actions shouldn&apos;t execute unchecked. AgentLedger intercepts agent decisions and routes them through a real-time approval queue.
+              </p>
+              <ul className="space-y-4 mb-8">
+                {[
+                  'Intercept any agent action before it executes',
+                  'Approve, reject, or modify with full audit log',
+                  'EU AI Act Article 14 compliant out of the box',
+                  'Configurable thresholds — only review what matters',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-white/70 text-sm">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass-button text-sm px-6 py-2.5 inline-flex items-center gap-2"
+                >
+                  See How It Works <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* How the Audit Chain Works */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-6"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">How the Audit Chain Works</h2>
+            <p className="text-white/50 text-lg max-w-2xl mx-auto">
+              Every action is cryptographically linked. Tamper with one block, and the entire chain breaks.
+            </p>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-white/30 text-sm mb-12"
+          >
+            Hover any block to simulate a tamper attempt
+          </motion.p>
+
+          {/* Chain diagram */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-0"
+          >
+            {auditBlocks.map((block, i) => {
+              const isTampered = tamperedBlock !== null;
+              const isTamperedBlock = tamperedBlock === i;
+              const isDownstream = tamperedBlock !== null && i >= tamperedBlock;
+
+              return (
+                <div key={block.hash} className="flex flex-col md:flex-row items-center">
+                  {/* Block */}
+                  <motion.div
+                    onHoverStart={() => setTamperedBlock(i)}
+                    onHoverEnd={() => setTamperedBlock(null)}
+                    className="relative rounded-xl p-4 w-56 cursor-pointer transition-all duration-300"
+                    style={{
+                      background: isDownstream
+                        ? 'rgba(239,68,68,0.1)'
+                        : 'rgba(124,58,237,0.08)',
+                      border: isDownstream
+                        ? '1px solid rgba(239,68,68,0.4)'
+                        : '1px solid rgba(124,58,237,0.25)',
+                      boxShadow: isTamperedBlock
+                        ? '0 0 30px rgba(239,68,68,0.3)'
+                        : isTampered
+                          ? 'none'
+                          : '0 0 20px rgba(124,58,237,0.08)',
+                    }}
+                  >
+                    {/* Tamper warning */}
+                    {isTamperedBlock && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
+                        style={{ background: 'rgba(239,68,68,0.9)', color: '#fff' }}
+                      >
+                        <AlertTriangle className="w-3 h-3" />
+                        TAMPER DETECTED
+                      </motion.div>
+                    )}
+                    {isDownstream && !isTamperedBlock && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
+                        style={{ background: 'rgba(239,68,68,0.7)', color: '#fff' }}
+                      >
+                        CHAIN BROKEN
+                      </motion.div>
+                    )}
+
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-semibold ${isDownstream ? 'text-red-400' : 'text-violet-400'}`}>
+                        {block.action}
+                      </span>
+                      <span className="text-white/20 text-[10px]">{block.time}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-white/25 text-[10px]">hash</span>
+                        <code className={`text-[10px] font-mono ${isDownstream ? 'text-red-400/70 line-through' : 'text-emerald-400/60'}`}>
+                          {block.hash}
+                        </code>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-white/25 text-[10px]">prev</span>
+                        <code className={`text-[10px] font-mono ${isDownstream && i > (tamperedBlock ?? 0) ? 'text-red-400/70' : 'text-white/25'}`}>
+                          {block.prev}
+                        </code>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Arrow connector */}
+                  {i < auditBlocks.length - 1 && (
+                    <div className={`hidden md:flex items-center mx-1 text-lg ${
+                      tamperedBlock !== null && i >= tamperedBlock ? 'text-red-500/60' : 'text-white/15'
+                    } transition-colors duration-300`}>
+                      &rarr;
+                    </div>
+                  )}
+                  {i < auditBlocks.length - 1 && (
+                    <div className={`md:hidden text-lg my-1 ${
+                      tamperedBlock !== null && i >= tamperedBlock ? 'text-red-500/60' : 'text-white/15'
+                    } transition-colors duration-300`}>
+                      &darr;
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </motion.div>
         </div>
       </section>
 
@@ -568,254 +1080,121 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How the Audit Chain Works */}
+      {/* ═══════════════════════════════════════ */}
+      {/* Competitor Comparison Table             */}
+      {/* ═══════════════════════════════════════ */}
       <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-6"
-          >
-            <h2 className="text-4xl font-bold text-white mb-4">How the Audit Chain Works</h2>
-            <p className="text-white/50 text-lg max-w-2xl mx-auto">
-              Every action is cryptographically linked. Tamper with one block, and the entire chain breaks.
-            </p>
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center text-white/30 text-sm mb-12"
-          >
-            Hover any block to simulate a tamper attempt
-          </motion.p>
-
-          {/* Chain diagram */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-0"
-          >
-            {auditBlocks.map((block, i) => {
-              const isTampered = tamperedBlock !== null;
-              const isTamperedBlock = tamperedBlock === i;
-              const isDownstream = tamperedBlock !== null && i >= tamperedBlock;
-
-              return (
-                <div key={block.hash} className="flex flex-col md:flex-row items-center">
-                  {/* Block */}
-                  <motion.div
-                    onHoverStart={() => setTamperedBlock(i)}
-                    onHoverEnd={() => setTamperedBlock(null)}
-                    className="relative rounded-xl p-4 w-56 cursor-pointer transition-all duration-300"
-                    style={{
-                      background: isDownstream
-                        ? 'rgba(239,68,68,0.1)'
-                        : 'rgba(124,58,237,0.08)',
-                      border: isDownstream
-                        ? '1px solid rgba(239,68,68,0.4)'
-                        : '1px solid rgba(124,58,237,0.25)',
-                      boxShadow: isTamperedBlock
-                        ? '0 0 30px rgba(239,68,68,0.3)'
-                        : isTampered
-                          ? 'none'
-                          : '0 0 20px rgba(124,58,237,0.08)',
-                    }}
-                  >
-                    {/* Tamper warning */}
-                    {isTamperedBlock && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
-                        style={{ background: 'rgba(239,68,68,0.9)', color: '#fff' }}
-                      >
-                        <AlertTriangle className="w-3 h-3" />
-                        TAMPER DETECTED
-                      </motion.div>
-                    )}
-                    {isDownstream && !isTamperedBlock && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
-                        style={{ background: 'rgba(239,68,68,0.7)', color: '#fff' }}
-                      >
-                        CHAIN BROKEN
-                      </motion.div>
-                    )}
-
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-semibold ${isDownstream ? 'text-red-400' : 'text-violet-400'}`}>
-                        {block.action}
-                      </span>
-                      <span className="text-white/20 text-[10px]">{block.time}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-white/25 text-[10px]">hash</span>
-                        <code className={`text-[10px] font-mono ${isDownstream ? 'text-red-400/70 line-through' : 'text-emerald-400/60'}`}>
-                          {block.hash}
-                        </code>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-white/25 text-[10px]">prev</span>
-                        <code className={`text-[10px] font-mono ${isDownstream && i > (tamperedBlock ?? 0) ? 'text-red-400/70' : 'text-white/25'}`}>
-                          {block.prev}
-                        </code>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Arrow connector */}
-                  {i < auditBlocks.length - 1 && (
-                    <div className={`hidden md:flex items-center mx-1 text-lg ${
-                      tamperedBlock !== null && i >= tamperedBlock ? 'text-red-500/60' : 'text-white/15'
-                    } transition-colors duration-300`}>
-                      &rarr;
-                    </div>
-                  )}
-                  {i < auditBlocks.length - 1 && (
-                    <div className={`md:hidden text-lg my-1 ${
-                      tamperedBlock !== null && i >= tamperedBlock ? 'text-red-500/60' : 'text-white/15'
-                    } transition-colors duration-300`}>
-                      &darr;
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Built for Compliance */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-white mb-4">Built for Compliance, Not Just Observability</h2>
-            <p className="text-white/50 text-lg">The only agent platform with a built-in human approval workflow</p>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Enterprise Compliance Shouldn&apos;t Cost{' '}
+              <span style={{ background: 'linear-gradient(135deg, #EF4444, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                $100,000
+              </span>
+            </h2>
+            <p className="text-white/50 text-lg max-w-3xl mx-auto">
+              LangSmith locks compliance behind a $100K/year Enterprise plan. AgentLedger gives you full compliance coverage at $29/month.
+            </p>
           </motion.div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Approval Queue Mockup */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="glass-card p-0 overflow-hidden"
-            >
-              {/* Mockup header */}
-              <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className="text-white font-semibold text-sm">Approval Queue</span>
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                  style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  3 PENDING
-                </span>
-              </div>
 
-              {/* Queue item 1 */}
-              <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(245,158,11,0.03)' }}>
-                <div className="flex items-start justify-between gap-3 mb-2.5">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white text-sm font-medium">finance-agent</span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>HIGH</span>
-                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-                        style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>
-                        <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse" />
-                        PENDING REVIEW
-                      </span>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="overflow-x-auto rounded-2xl"
+            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <th className="text-left px-5 py-4 text-white/50 font-medium text-xs uppercase tracking-wider" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    Feature
+                  </th>
+                  <th className="text-center px-5 py-4 relative" style={{ borderBottom: '1px solid rgba(124,58,237,0.5)', background: 'rgba(124,58,237,0.06)' }}>
+                    {/* BEST VALUE badge */}
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold tracking-wider text-white whitespace-nowrap"
+                      style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}>
+                      BEST VALUE
                     </div>
-                    <p className="text-white/40 text-xs">Execute wire transfer of $48,200 to vendor account</p>
-                  </div>
-                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">2m ago</span>
-                </div>
-                <div className="flex gap-2">
-                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
-                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
-                </div>
-              </div>
+                    <span className="text-white font-bold text-xs">AgentLedger Pro</span>
+                    <br />
+                    <span className="text-violet-400 text-xs font-medium">$29/mo</span>
+                  </th>
+                  <th className="text-center px-5 py-4 text-white/50 font-medium text-xs" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <span className="text-white/60 font-bold">LangSmith Enterprise</span>
+                    <br />
+                    <span className="text-white/40 text-xs">$100K+/yr</span>
+                  </th>
+                  <th className="text-center px-5 py-4 text-white/50 font-medium text-xs" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <span className="text-white/60 font-bold">Langfuse</span>
+                    <br />
+                    <span className="text-white/40 text-xs">$29/mo</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonRows.map((row, i) => {
+                  const statusIcon = (s: { text: string; status: string }) => {
+                    if (s.status === 'yes') return <span style={{ color: '#10B981' }}>&#10003; {s.text}</span>;
+                    if (s.status === 'warn') return <span style={{ color: '#F59E0B' }}>&#9888;&#xFE0F; {s.text}</span>;
+                    return <span style={{ color: '#EF4444' }}>&#10005; {s.text}</span>;
+                  };
 
-              {/* Queue item 2 */}
-              <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div className="flex items-start justify-between gap-3 mb-2.5">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white text-sm font-medium">support-agent</span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>MEDIUM</span>
-                    </div>
-                    <p className="text-white/40 text-xs">Send account credentials reset to user@client.com</p>
-                  </div>
-                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">5m ago</span>
-                </div>
-                <div className="flex gap-2">
-                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
-                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
-                </div>
-              </div>
+                  return (
+                    <tr
+                      key={row.feature}
+                      style={{
+                        background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.03)',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      <td className="px-5 py-3.5 text-white/70 text-sm font-medium">{row.feature}</td>
+                      <td className="px-5 py-3.5 text-center text-sm" style={{ background: 'rgba(124,58,237,0.04)', borderLeft: '1px solid rgba(124,58,237,0.15)', borderRight: '1px solid rgba(124,58,237,0.15)' }}>
+                        {statusIcon(row.agentledger)}
+                      </td>
+                      <td className="px-5 py-3.5 text-center text-sm">{statusIcon(row.langsmith)}</td>
+                      <td className="px-5 py-3.5 text-center text-sm">{statusIcon(row.langfuse)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </motion.div>
 
-              {/* Queue item 3 */}
-              <div className="px-5 py-4">
-                <div className="flex items-start justify-between gap-3 mb-2.5">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white text-sm font-medium">data-agent</span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>HIGH</span>
-                    </div>
-                    <p className="text-white/40 text-xs">Delete 12,400 records from production database</p>
-                  </div>
-                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">8m ago</span>
-                </div>
-                <div className="flex gap-2">
-                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
-                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
-                </div>
-              </div>
-            </motion.div>
+          {/* Disclaimer */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-4 text-white/25 text-xs text-center max-w-2xl mx-auto"
+          >
+            Competitor pricing sourced from public documentation as of March 2026. LangSmith compliance features require Enterprise plan (~$100K+ annual commitment).
+          </motion.p>
 
-            {/* Right: Bullet points + CTA */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <h3 className="text-2xl font-bold text-white mb-3">Human oversight where it matters most</h3>
-              <p className="text-white/50 mb-8 leading-relaxed">
-                High-risk AI actions shouldn&apos;t execute unchecked. AgentLedger intercepts agent decisions and routes them through a real-time approval queue.
-              </p>
-              <ul className="space-y-4 mb-8">
-                {[
-                  'Intercept any agent action before it executes',
-                  'Approve, reject, or modify with full audit log',
-                  'EU AI Act Article 14 compliant out of the box',
-                  'Configurable thresholds — only review what matters',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-white/70 text-sm">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signup">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="glass-button text-sm px-6 py-2.5 inline-flex items-center gap-2"
-                >
-                  See How It Works <ArrowRight className="w-4 h-4" />
-                </motion.button>
-              </Link>
-            </motion.div>
-          </div>
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-10 text-center"
+          >
+            <Link href="/signup">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="glass-button text-base px-8 py-3 inline-flex items-center gap-2"
+                style={{ background: 'rgba(124,58,237,0.5)', borderColor: 'rgba(124,58,237,0.8)' }}
+              >
+                Start Free — No Credit Card Required <ArrowRight className="w-4 h-4" />
+              </motion.button>
+            </Link>
+            <p className="mt-3 text-white/30 text-sm">Join developers who chose compliance without the enterprise price tag</p>
+          </motion.div>
         </div>
       </section>
 
