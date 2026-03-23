@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Shield, Zap, BarChart3, Search, Lock, Bell, ArrowRight, Check } from 'lucide-react';
+import { Shield, Zap, BarChart3, Search, Lock, Bell, ArrowRight, Check, UserCheck, CheckCircle, Fingerprint, AlertTriangle, FileText, Download } from 'lucide-react';
 
 const features = [
   {
@@ -31,9 +32,26 @@ const features = [
     description: 'Automatic alerts when agents behave unexpectedly — cost spikes, loops, or silent failures.',
   },
   {
-    icon: Lock,
-    title: 'Compliance Reports',
-    description: 'One-click compliance reports. Prove your AI systems behave as intended to any auditor.',
+    icon: FileText,
+    title: 'One-Click Compliance Reports',
+    description: 'Generate audit-ready reports mapped to EU AI Act Articles 9, 13, 14 & 17, SOC 2 Type II AI controls, and ISO 42001 clauses — in one click. Hand them directly to auditors, legal, or enterprise procurement.',
+    complianceBadges: [
+      { label: 'EU AI Act', color: '#3B82F6' },
+      { label: 'SOC 2 Type II', color: '#8B5CF6' },
+      { label: 'ISO 42001', color: '#10B981' },
+    ],
+  },
+  {
+    icon: Fingerprint,
+    title: 'Tamper-Proof Audit Chain',
+    description: 'Every agent action is SHA-256 hashed and chained. Any attempt to alter historical records is cryptographically impossible — giving regulators and auditors a trail they can actually trust.',
+    codeSnippet: true,
+  },
+  {
+    icon: UserCheck,
+    title: 'Human-in-Loop Approval Queue',
+    description: 'Pause high-risk agent actions for human review before execution. Meet EU AI Act Article 14 mandates with a built-in approval workflow — approve, reject, or modify any agent decision in real time.',
+    badge: 'EU AI Act Art. 14',
   },
 ];
 
@@ -61,7 +79,7 @@ const plans = [
     price: '$0',
     period: '/month',
     description: 'For individuals and small projects',
-    features: ['3 agents', '10k events/month', '7-day retention', 'Basic analytics', 'Community support'],
+    features: ['3 agents', '10k events/month', '7-day retention', 'Basic analytics', 'Basic audit logs only', 'Community support'],
     cta: 'Get Started',
     highlight: false,
   },
@@ -70,7 +88,7 @@ const plans = [
     price: '$29',
     period: '/month',
     description: 'For teams building production AI',
-    features: ['Unlimited agents', '1M events/month', '90-day retention', 'Full analytics', 'Anomaly detection', 'Priority support'],
+    features: ['Unlimited agents', '1M events/month', '90-day retention', 'Full analytics', 'EU AI Act + SOC 2 reports included', 'Anomaly detection', 'Priority support'],
     cta: 'Start Free Trial',
     highlight: true,
   },
@@ -79,13 +97,39 @@ const plans = [
     price: 'Custom',
     period: '',
     description: 'For organizations at scale',
-    features: ['Unlimited everything', 'Unlimited retention', 'SSO & SAML', 'Custom compliance', 'Dedicated support', 'SLA guarantee'],
+    features: ['Unlimited everything', 'Unlimited retention', 'SSO & SAML', 'Custom compliance frameworks + ISO 42001', 'Dedicated support', 'SLA guarantee'],
     cta: 'Contact Sales',
     highlight: false,
   },
 ];
 
+const HEX = '0123456789abcdef';
+function HashAnimation() {
+  const [hash, setHash] = useState('a3f8c2e1d9b4f7a2');
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHash(Array.from({ length: 16 }, () => HEX[Math.floor(Math.random() * 16)]).join(''));
+    }, 200);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <code className="text-xs font-mono tracking-wider" style={{ color: '#4ADE80' }}>
+      <span className="text-white/30">action_hash: </span>
+      sha256:{hash}...
+    </code>
+  );
+}
+
+const auditBlocks = [
+  { action: 'tool_call', hash: 'a3f8c2e1', prev: '00000000', time: '10:42:08' },
+  { action: 'llm_response', hash: 'b2e7d1f4', prev: 'a3f8c2e1', time: '10:42:09' },
+  { action: 'api_request', hash: 'c9a4b3e8', prev: 'b2e7d1f4', time: '10:42:10' },
+  { action: 'db_write', hash: 'd1f5e2a7', prev: 'c9a4b3e8', time: '10:42:11' },
+];
+
 export default function LandingPage() {
+  const [tamperedBlock, setTamperedBlock] = useState<number | null>(null);
+
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Nav */}
@@ -140,15 +184,14 @@ export default function LandingPage() {
               Now in Public Beta
             </div>
             <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Black Box Recorder
+              Tamper-Proof Audit Layer
               <br />
               <span style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 for AI Agents
               </span>
             </h1>
             <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Full observability for every AI agent you build. Record every decision, track every cost,
-              and replay every session — so you always know what your agents are doing.
+              Cryptographically immutable audit trails, human-in-loop controls, and one-click compliance reports — for every AI agent you build.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup">
@@ -170,6 +213,54 @@ export default function LandingPage() {
                 </motion.button>
               </Link>
             </div>
+
+            {/* Trust Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="mt-10 flex flex-wrap items-center justify-center gap-3"
+            >
+              {[
+                { icon: Lock, label: 'SHA-256 Tamper-Proof Audit Trail' },
+                { icon: Shield, label: 'EU AI Act Ready' },
+                { icon: Zap, label: '<5ms Event Latency' },
+              ].map((item) => {
+                const TIcon = item.icon;
+                return (
+                  <span key={item.label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-white/50"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <TIcon className="w-3 h-3" />
+                    {item.label}
+                  </span>
+                );
+              })}
+            </motion.div>
+
+            {/* Compliance Frameworks */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="mt-4 text-xs text-white/30"
+            >
+              Trusted compliance coverage for{' '}
+              <span className="text-blue-400/70">EU AI Act</span>
+              {' · '}
+              <span className="text-violet-400/70">SOC 2 Type II</span>
+              {' · '}
+              <span className="text-emerald-400/70">ISO 42001</span>
+            </motion.p>
+
+            {/* Live Hash Animation */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="mt-5"
+            >
+              <HashAnimation />
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -238,9 +329,492 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-white font-semibold text-lg mb-2">{feature.title}</h3>
                   <p className="text-white/50 text-sm leading-relaxed">{feature.description}</p>
+                  {'complianceBadges' in feature && feature.complianceBadges && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {(feature.complianceBadges as Array<{label: string; color: string}>).map((b) => (
+                        <span key={b.label} className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
+                          style={{ background: `${b.color}25`, border: `1px solid ${b.color}50` }}>
+                          {b.label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {'codeSnippet' in feature && feature.codeSnippet && (
+                    <pre className="mt-3 p-3 rounded-lg text-[11px] font-mono leading-relaxed overflow-x-auto"
+                      style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <code className="text-emerald-400/80">
+{`{
+  action_id: "act_9f3k2m",
+  hash: "sha256:a3f8c2e1...",
+  prev_hash: "sha256:b2e7d1f4...",
+  timestamp: "2026-03-23T10:42:11Z"
+}`}
+                      </code>
+                    </pre>
+                  )}
+                  {'badge' in feature && feature.badge && (
+                    <span className="inline-block mt-3 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                      style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#FBBF24' }}>
+                      {feature.badge}
+                    </span>
+                  )}
                 </motion.div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Compliance Coverage */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">Built for the Regulations That Actually Matter</h2>
+            <p className="text-white/50 text-lg">AgentLedger maps every agent action to the specific articles and controls auditors look for.</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {/* EU AI Act Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              className="rounded-2xl p-6 transition-all duration-300 cursor-default"
+              style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', boxShadow: '0 0 25px rgba(59,130,246,0.05)' }}
+            >
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold mb-4 text-blue-300"
+                style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}>
+                Effective August 2026
+              </span>
+              <h3 className="text-white font-bold text-xl mb-4">EU AI Act</h3>
+              <ul className="space-y-2.5 mb-5">
+                {[
+                  ['Article 9', 'Risk Management System'],
+                  ['Article 13', 'Transparency & Logging'],
+                  ['Article 14', 'Human Oversight'],
+                  ['Article 17', 'Quality Management'],
+                ].map(([art, desc]) => (
+                  <li key={art} className="flex items-start gap-2 text-sm">
+                    <Check className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <span><span className="text-white/80 font-medium">{art}</span> <span className="text-white/40">— {desc}</span></span>
+                  </li>
+                ))}
+              </ul>
+              <span className="text-[10px] font-semibold text-blue-400/60 uppercase tracking-wider">High-Risk AI Systems</span>
+            </motion.div>
+
+            {/* SOC 2 Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              whileHover={{ y: -4 }}
+              className="rounded-2xl p-6 transition-all duration-300 cursor-default"
+              style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)', boxShadow: '0 0 25px rgba(139,92,246,0.05)' }}
+            >
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold mb-4 text-violet-300"
+                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                Trust Service Criteria
+              </span>
+              <h3 className="text-white font-bold text-xl mb-4">SOC 2 Type II</h3>
+              <ul className="space-y-2.5 mb-5">
+                {[
+                  ['CC7.2', 'System Monitoring'],
+                  ['CC7.3', 'Incident Detection'],
+                  ['CC9.2', 'Vendor Risk Management'],
+                  ['A1.2', 'System Availability'],
+                ].map(([code, desc]) => (
+                  <li key={code} className="flex items-start gap-2 text-sm">
+                    <Check className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
+                    <span><span className="text-white/80 font-medium">{code}</span> <span className="text-white/40">— {desc}</span></span>
+                  </li>
+                ))}
+              </ul>
+              <span className="text-[10px] font-semibold text-violet-400/60 uppercase tracking-wider">AI Operations</span>
+            </motion.div>
+
+            {/* ISO 42001 Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              whileHover={{ y: -4 }}
+              className="rounded-2xl p-6 transition-all duration-300 cursor-default"
+              style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', boxShadow: '0 0 25px rgba(16,185,129,0.05)' }}
+            >
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold mb-4 text-emerald-300"
+                style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)' }}>
+                AI Management System
+              </span>
+              <h3 className="text-white font-bold text-xl mb-4">ISO 42001</h3>
+              <ul className="space-y-2.5 mb-5">
+                {[
+                  ['Clause 6.1', 'Risk & Opportunity'],
+                  ['Clause 8.4', 'AI System Logging'],
+                  ['Clause 9.1', 'Monitoring & Measurement'],
+                  ['Clause 10.2', 'Nonconformity & Corrective Action'],
+                ].map(([clause, desc]) => (
+                  <li key={clause} className="flex items-start gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span><span className="text-white/80 font-medium">{clause}</span> <span className="text-white/40">— {desc}</span></span>
+                  </li>
+                ))}
+              </ul>
+              <span className="text-[10px] font-semibold text-emerald-400/60 uppercase tracking-wider">AI Governance</span>
+            </motion.div>
+          </div>
+
+          {/* CTA strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center glass-card p-6 flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <p className="text-white/60 text-sm">Audit coming up? Generate your compliance package in under 60 seconds.</p>
+            <Link href="/signup">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="glass-button text-sm px-5 py-2 inline-flex items-center gap-2 whitespace-nowrap"
+              >
+                Generate Sample Report <ArrowRight className="w-4 h-4" />
+              </motion.button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Report Preview Mockup */}
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative rounded-2xl overflow-hidden"
+            style={{ background: 'rgba(255,255,255,0.97)', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}
+          >
+            {/* SAMPLE REPORT watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10">
+              <span className="text-6xl md:text-8xl font-black rotate-[-18deg]" style={{ color: 'rgba(0,0,0,0.04)' }}>
+                SAMPLE REPORT
+              </span>
+            </div>
+
+            {/* Report header */}
+            <div className="px-6 md:px-8 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid #E5E7EB' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-md" style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }} />
+                <div>
+                  <h4 className="text-gray-900 font-bold text-sm">AgentLedger Compliance Report</h4>
+                  <p className="text-gray-400 text-[10px]">EU AI Act — Generated Mar 23, 2026</p>
+                </div>
+              </div>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                style={{ background: '#F3F4F6', border: '1px solid #E5E7EB' }}>
+                <Download className="w-3.5 h-3.5" />
+                Download PDF
+              </button>
+            </div>
+
+            {/* Report table */}
+            <div className="relative z-20">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                    <th className="text-left px-6 md:px-8 py-3 text-gray-500 font-medium text-xs">Article</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium text-xs">Requirement</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium text-xs">Status</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium text-xs hidden sm:table-cell">Evidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { article: 'Article 13', req: 'Transparency Logging', pass: true, evidence: 'View 2,847 events' },
+                    { article: 'Article 14', req: 'Human Oversight Controls', pass: true, evidence: 'View 12 approvals' },
+                    { article: 'Article 9', req: 'Risk Management Trail', pass: true, evidence: 'View audit chain' },
+                    { article: 'Article 17', req: 'Quality Management System', pass: false, evidence: '2 gaps identified' },
+                  ].map((row) => (
+                    <tr key={row.article} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td className="px-6 md:px-8 py-3.5 text-gray-900 font-medium text-xs">{row.article}</td>
+                      <td className="px-4 py-3.5 text-gray-600 text-xs">{row.req}</td>
+                      <td className="px-4 py-3.5">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          row.pass
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          {row.pass ? 'PASS' : 'FAIL'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 hidden sm:table-cell">
+                        <span className="text-blue-600 text-xs cursor-pointer hover:underline">{row.evidence}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How the Audit Chain Works */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-6"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">How the Audit Chain Works</h2>
+            <p className="text-white/50 text-lg max-w-2xl mx-auto">
+              Every action is cryptographically linked. Tamper with one block, and the entire chain breaks.
+            </p>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-white/30 text-sm mb-12"
+          >
+            Hover any block to simulate a tamper attempt
+          </motion.p>
+
+          {/* Chain diagram */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-0"
+          >
+            {auditBlocks.map((block, i) => {
+              const isTampered = tamperedBlock !== null;
+              const isTamperedBlock = tamperedBlock === i;
+              const isDownstream = tamperedBlock !== null && i >= tamperedBlock;
+
+              return (
+                <div key={block.hash} className="flex flex-col md:flex-row items-center">
+                  {/* Block */}
+                  <motion.div
+                    onHoverStart={() => setTamperedBlock(i)}
+                    onHoverEnd={() => setTamperedBlock(null)}
+                    className="relative rounded-xl p-4 w-56 cursor-pointer transition-all duration-300"
+                    style={{
+                      background: isDownstream
+                        ? 'rgba(239,68,68,0.1)'
+                        : 'rgba(124,58,237,0.08)',
+                      border: isDownstream
+                        ? '1px solid rgba(239,68,68,0.4)'
+                        : '1px solid rgba(124,58,237,0.25)',
+                      boxShadow: isTamperedBlock
+                        ? '0 0 30px rgba(239,68,68,0.3)'
+                        : isTampered
+                          ? 'none'
+                          : '0 0 20px rgba(124,58,237,0.08)',
+                    }}
+                  >
+                    {/* Tamper warning */}
+                    {isTamperedBlock && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
+                        style={{ background: 'rgba(239,68,68,0.9)', color: '#fff' }}
+                      >
+                        <AlertTriangle className="w-3 h-3" />
+                        TAMPER DETECTED
+                      </motion.div>
+                    )}
+                    {isDownstream && !isTamperedBlock && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
+                        style={{ background: 'rgba(239,68,68,0.7)', color: '#fff' }}
+                      >
+                        CHAIN BROKEN
+                      </motion.div>
+                    )}
+
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-semibold ${isDownstream ? 'text-red-400' : 'text-violet-400'}`}>
+                        {block.action}
+                      </span>
+                      <span className="text-white/20 text-[10px]">{block.time}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-white/25 text-[10px]">hash</span>
+                        <code className={`text-[10px] font-mono ${isDownstream ? 'text-red-400/70 line-through' : 'text-emerald-400/60'}`}>
+                          {block.hash}
+                        </code>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-white/25 text-[10px]">prev</span>
+                        <code className={`text-[10px] font-mono ${isDownstream && i > (tamperedBlock ?? 0) ? 'text-red-400/70' : 'text-white/25'}`}>
+                          {block.prev}
+                        </code>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Arrow connector */}
+                  {i < auditBlocks.length - 1 && (
+                    <div className={`hidden md:flex items-center mx-1 text-lg ${
+                      tamperedBlock !== null && i >= tamperedBlock ? 'text-red-500/60' : 'text-white/15'
+                    } transition-colors duration-300`}>
+                      &rarr;
+                    </div>
+                  )}
+                  {i < auditBlocks.length - 1 && (
+                    <div className={`md:hidden text-lg my-1 ${
+                      tamperedBlock !== null && i >= tamperedBlock ? 'text-red-500/60' : 'text-white/15'
+                    } transition-colors duration-300`}>
+                      &darr;
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Built for Compliance */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">Built for Compliance, Not Just Observability</h2>
+            <p className="text-white/50 text-lg">The only agent platform with a built-in human approval workflow</p>
+          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Approval Queue Mockup */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="glass-card p-0 overflow-hidden"
+            >
+              {/* Mockup header */}
+              <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className="text-white font-semibold text-sm">Approval Queue</span>
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  3 PENDING
+                </span>
+              </div>
+
+              {/* Queue item 1 */}
+              <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(245,158,11,0.03)' }}>
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white text-sm font-medium">finance-agent</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>HIGH</span>
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                        style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>
+                        <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse" />
+                        PENDING REVIEW
+                      </span>
+                    </div>
+                    <p className="text-white/40 text-xs">Execute wire transfer of $48,200 to vendor account</p>
+                  </div>
+                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">2m ago</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
+                </div>
+              </div>
+
+              {/* Queue item 2 */}
+              <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white text-sm font-medium">support-agent</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(245,158,11,0.2)', color: '#FBBF24' }}>MEDIUM</span>
+                    </div>
+                    <p className="text-white/40 text-xs">Send account credentials reset to user@client.com</p>
+                  </div>
+                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">5m ago</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
+                </div>
+              </div>
+
+              {/* Queue item 3 */}
+              <div className="px-5 py-4">
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white text-sm font-medium">data-agent</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>HIGH</span>
+                    </div>
+                    <p className="text-white/40 text-xs">Delete 12,400 records from production database</p>
+                  </div>
+                  <span className="text-white/20 text-xs whitespace-nowrap mt-0.5">8m ago</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }}>Approve</button>
+                  <button className="px-3 py-1 rounded-md text-xs font-medium text-white" style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}>Reject</button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right: Bullet points + CTA */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <h3 className="text-2xl font-bold text-white mb-3">Human oversight where it matters most</h3>
+              <p className="text-white/50 mb-8 leading-relaxed">
+                High-risk AI actions shouldn&apos;t execute unchecked. AgentLedger intercepts agent decisions and routes them through a real-time approval queue.
+              </p>
+              <ul className="space-y-4 mb-8">
+                {[
+                  'Intercept any agent action before it executes',
+                  'Approve, reject, or modify with full audit log',
+                  'EU AI Act Article 14 compliant out of the box',
+                  'Configurable thresholds — only review what matters',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-white/70 text-sm">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass-button text-sm px-6 py-2.5 inline-flex items-center gap-2"
+                >
+                  See How It Works <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              </Link>
+            </motion.div>
           </div>
         </div>
       </section>
