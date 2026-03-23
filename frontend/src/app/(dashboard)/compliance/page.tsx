@@ -69,6 +69,15 @@ export default function CompliancePage() {
   const complianceScore = report ? Math.round((checks.filter(c => c.status === 'pass').length / Math.max(checks.length, 1)) * 100) : 0;
   const org = { name: 'My Organisation' };
 
+  function escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function exportReport() {
     if (!report) return;
     const reportContent = `
@@ -120,11 +129,11 @@ export default function CompliancePage() {
           </tr>
           ${checks.map(check => `
             <tr>
-              <td><strong>${check.name}</strong></td>
+              <td><strong>${escapeHtml(check.name)}</strong></td>
               <td style="color: ${check.status === 'pass' ? '#10B981' : '#EF4444'}">
                 ${check.status === 'pass' ? 'PASS' : 'FAIL'}
               </td>
-              <td>${check.description || 'N/A'}</td>
+              <td>${escapeHtml(check.description || 'N/A')}</td>
             </tr>
           `).join('')}
         </table>
@@ -135,8 +144,8 @@ export default function CompliancePage() {
             <span class="status ${check.status === 'pass' ? 'pass' : 'fail'}">
               ${check.status === 'pass' ? 'PASS' : 'FAIL'}
             </span>
-            <div class="check-title">${check.name}</div>
-            <div class="check-desc">${check.description || ''}</div>
+            <div class="check-title">${escapeHtml(check.name)}</div>
+            <div class="check-desc">${escapeHtml(check.description || '')}</div>
           </div>
         `).join('')}
 
@@ -177,9 +186,9 @@ export default function CompliancePage() {
           </tr>
           ${checks.map(check => `
             <tr>
-              <td><b>${check.name}</b></td>
+              <td><b>${escapeHtml(check.name)}</b></td>
               <td>${check.status === 'pass' ? 'PASS' : 'FAIL'}</td>
-              <td>${check.description || ''}</td>
+              <td>${escapeHtml(check.description || '')}</td>
             </tr>
           `).join('')}
         </table>

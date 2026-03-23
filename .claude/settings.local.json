@@ -36,7 +36,14 @@
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNmJmN2YzZi03ZmFjLTRlMTctYTVlNS0wM2UzNWY2ZmVmMWQiLCJvcmdJZCI6IjU3MjU1ODhhLWNiMmEtNGVhZS1hZTllLTMzYTgyNGM4YzA4MSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc3Mzg0MDI0MiwiZXhwIjoxNzczODQxMTQyfQ.u-8sS5VKQfqGXhBWMBrCjNjGjHTTb1-IlBtoyr7eHQ8\")",
       "Bash(__NEW_LINE_acbf1ca593a6b348__ curl:*)",
       "Bash(__NEW_LINE_7f70334289640ee0__ curl:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(find /c/Users/aarti/Documents/AgentLedger/backend/src/events -type f -name *.ts)",
+      "Bash(find /c/Users/aarti/Documents/AgentLedger/frontend -name *replay* -o -name *timeline* -o -name *session*)",
+      "Bash(ls:*)",
+      "Bash(grep -r \"EventTimeline\\\\|Timeline\\\\|EventList\" /c/Users/aarti/Documents/AgentLedger/frontend/src --include=*.tsx --include=*.ts)",
+      "Bash(find /c/Users/aarti/Documents/AgentLedger/frontend/src/components -name *.tsx -type f)",
+      "Bash(timeout 15 npx ts-node -e \":*)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }
