@@ -43,7 +43,8 @@
       "Bash(grep -r \"EventTimeline\\\\|Timeline\\\\|EventList\" /c/Users/aarti/Documents/AgentLedger/frontend/src --include=*.tsx --include=*.ts)",
       "Bash(find /c/Users/aarti/Documents/AgentLedger/frontend/src/components -name *.tsx -type f)",
       "Bash(timeout 15 npx ts-node -e \":*)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(npx next:*)"
     ]
   }
 }
