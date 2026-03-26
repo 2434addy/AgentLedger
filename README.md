@@ -1,265 +1,233 @@
 <div align="center">
 
-# AgentLedger
+```
+ █████╗  ██████╗ ███████╗███╗   ██╗████████╗
+██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝
+███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║
+██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║
+██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║
+╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝
+██╗     ███████╗██████╗  ██████╗ ███████╗██████╗
+██║     ██╔════╝██╔══██╗██╔════╝ ██╔════╝██╔══██╗
+██║     █████╗  ██║  ██║██║  ███╗█████╗  ██████╔╝
+██║     ██╔══╝  ██║  ██║██║   ██║██╔══╝  ██╔══██╗
+███████╗███████╗██████╔╝╚██████╔╝███████╗██║  ██║
+╚══════╝╚══════╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝
+```
 
-**Tamper-proof audit layer for AI agents. SHA-256 hashed audit trails, human-in-loop approvals, rollback engine, and one-click EU AI Act / SOC 2 / ISO 42001 compliance reports.**
+**Black Box Recorder for AI Agents**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](https://github.com/2434addy/AgentLedger/pulls)
-[![Status](https://img.shields.io/badge/Status-Public%20Beta-orange?style=for-the-badge)]()
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-agent--ledger--tau.vercel.app-purple?style=for-the-badge)](https://agent-ledger-tau.vercel.app)
+Every LLM call. Every tool use. Every token spent. Recorded, searchable, and replayable.
 
-⭐ Star this repo if AgentLedger saves you from a compliance nightmare
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-agent--ledger--tau.vercel.app-blueviolet?style=flat-square)](https://agent-ledger-tau.vercel.app)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/2434addy/AgentLedger/pulls)
+
+[Live Demo](https://agent-ledger-tau.vercel.app) &middot; [SDK Docs](#sdk) &middot; [Self-Host](#self-host) &middot; [Contributing](#contributing)
 
 </div>
 
 ---
 
-## Why AgentLedger?
+## What is AgentLedger?
 
-LangSmith shows you what your agents did. AgentLedger proves it can't be changed — and generates the compliance paperwork to prove it to regulators. One SDK. Any framework. Full EU AI Act Article 14 compliance in under 5 minutes.
+AgentLedger is an open-source observability platform that records everything your AI agents do — LLM calls, tool invocations, costs, errors — and lets you replay, analyze, and audit any session after the fact.
 
-| Feature | AgentLedger | LangSmith |
-|---|---|---|
-| SHA-256 Tamper-Proof Audit Chain | ✅ | ❌ |
-| Human-in-Loop Approval Queue | ✅ | ❌ |
-| Agent Rollback Engine | ✅ | ❌ |
-| EU AI Act Compliance Reports | ✅ | ❌ Enterprise only |
-| SOC 2 Type II Reports | ✅ | ❌ Enterprise only |
-| ISO 42001 Reports | ✅ | ❌ |
-| Works with ANY framework | ✅ | ⚠️ LangChain only |
-| Pricing | $29/mo | $100K+/yr for compliance |
+## The Problem
+
+You deploy an AI agent. It runs 10,000 sessions a day. Then something goes wrong.
+
+- **What happened?** You have logs, but they're scattered across stdout, CloudWatch, and Datadog.
+- **How much did it cost?** You check the OpenAI dashboard. It shows a total. Not per-session. Not per-agent.
+- **Was it the prompt? The tool? The model?** You add more logging. Deploy. Wait. Hope it happens again.
+- **The compliance team asks for an audit trail.** You open a spreadsheet.
+
+AI agents are the first software that makes decisions on your behalf, but they ship with less observability than a 2005 Rails app.
+
+## The Solution
+
+AgentLedger sits between your agent and the outside world. One SDK call wraps your agent. From that point, every LLM call, tool use, and state change is captured with:
+
+- **Session replay** — step through any session like a debugger
+- **Cost analytics** — per-agent, per-session, per-model token and dollar tracking
+- **Anomaly detection** — automatic alerts on cost spikes, error bursts, and drift
+- **Compliance reports** — EU AI Act, SOC 2, ISO 42001 audit-ready exports
+- **SHA-256 hash chains** — tamper-proof event history
 
 ---
 
-## 🚀 Live Demo
+## Quick Start
 
-> Try it live → **[agent-ledger-tau.vercel.app](https://agent-ledger-tau.vercel.app)**
-
----
-
-## ⚡ Quick Start
-
-Up and running in 5 minutes.
-
-### Step 1 — Install
+### 1. Install the SDK
 
 ```bash
-npm install @agentledger/sdk
+npm install @2434addy/agentledger-sdk
 ```
 
-### Step 2 — Wrap your agent
-
-**OpenAI:**
+### 2. Track your agent (5 lines)
 
 ```typescript
-import { AgentLedger } from '@agentledger/sdk';
+import { AgentLedger } from '@2434addy/agentledger-sdk'
 
-const ledger = new AgentLedger({ apiKey: 'al_your_key' });
+const al = new AgentLedger({ apiKey: 'al_live_sk_...' })
 
-const agent = ledger.wrap('my-agent', async (input) => {
-  return await openai.chat.completions.create({ ... });
-});
+const agent = await al.createAgent({
+  name: 'support-bot',
+  description: 'Customer support agent',
+  modelProvider: 'anthropic',
+  modelId: 'claude-sonnet-4-6',
+})
 
-// Every call is now SHA-256 hashed + EU AI Act ready
-const result = await agent.run({ task: 'Analyze customer data' });
+const session = await al.createSession({ agentId: agent.id })
+
+// Track any event — LLM calls, tool use, errors, anything
+al.track({
+  agentId: agent.id,
+  sessionId: session.id,
+  category: 'llm_call',
+  level: 'info',
+  message: 'Called Claude API',
+  tokensInput: 150,
+  tokensOutput: 420,
+  latencyMs: 1200,
+})
+
+await al.flush()
 ```
 
-**LangChain:**
-
-```typescript
-import { AgentLedger } from '@agentledger/sdk';
-
-const ledger = new AgentLedger({ apiKey: 'al_your_key' });
-
-// Drop into any existing LangChain agent — zero refactoring
-const trackedExecutor = ledger.wrap('langchain-agent', executor);
-
-await trackedExecutor.invoke({ input: 'Summarize sales report' });
-// Tamper-proof audit trail generated automatically ✓
-```
-
-**CrewAI / Any Framework:**
-
-```typescript
-import { AgentLedger } from '@agentledger/sdk';
-
-const ledger = new AgentLedger({ apiKey: 'al_your_key' });
-
-// Works with any agent framework via simple wrapper
-const session = await ledger.session('my-crew', () =>
-  crew.kickoff({ inputs: { topic: 'Q1 Sales' } })
-);
-```
-
-### Step 3 — View your dashboard
-
-Open [agent-ledger-tau.vercel.app](https://agent-ledger-tau.vercel.app) → sign in → see every agent action, hash, and compliance status in real time.
+That's it. Every event is now in your dashboard — searchable, replayable, auditable.
 
 ---
 
-## 🔐 Features
+## Features
 
-**🔒 Tamper-Proof Audit Chain**
+### Session Replay
 
-Every agent action is SHA-256 hashed and chained. Altering any historical record breaks the chain — giving regulators a trail they can actually trust.
+Step through any agent session event-by-event. See the exact inputs, outputs, and timing of every LLM call, tool invocation, and decision point. Debug production issues without adding more logging.
 
-```json
-{
-  "action_id": "act_9f3k2m",
-  "hash": "sha256:a3f8c2e1d9b4...",
-  "prev_hash": "sha256:b2e7d1f4c8a3...",
-  "timestamp": "2026-03-23T10:42:11Z",
-  "status": "VERIFIED"
-}
-```
+### Cost Analytics
 
-**👤 Human-in-Loop Approval Queue**
+Track token usage and dollar cost per agent, per session, per model. Spot which agents are burning through your budget. Set alerts before you get a surprise invoice.
 
-Intercept high-risk agent actions before they execute. Approve, reject, or modify — with full audit log. EU AI Act Article 14 compliant out of the box.
+### Anomaly Detection
 
-**↩️ Rollback Engine**
+Automatic detection of cost spikes, error rate increases, latency degradation, and behavioral drift. Get alerted when an agent starts acting differently — before your users notice.
 
-One-click rollback any agent action. Full state restoration with cryptographic proof of what changed.
+### Compliance & Audit
 
-**📊 Real-Time Anomaly Detection**
+Generate audit-ready reports for regulatory frameworks:
 
-Automatic alerts on cost spikes, infinite loops, silent failures, and unexpected behavior patterns.
+- **EU AI Act** — Articles 9, 13, 14, 17 (human oversight, transparency, risk management)
+- **SOC 2 Type II** — CC7.2, CC7.3, CC9.2 (monitoring, detection, incident response)
+- **ISO 42001** — Clauses 6.1, 8.4, 9.1, 10.2 (AI risk, operations, evaluation)
 
-**📋 One-Click Compliance Reports**
+Every event is SHA-256 hashed and chained. Tamper with one record and the chain breaks.
 
-Generate audit-ready reports for:
-- 🇪🇺 **EU AI Act** — Articles 9, 13, 14, 17
-- 🔐 **SOC 2 Type II** — CC7.2, CC7.3, CC9.2
-- 📋 **ISO 42001** — Clauses 6.1, 8.4, 9.1, 10.2
+### TypeScript SDK
 
-**⚡ Real-Time Session Replay**
-
-Step through any agent session like a debugger. Inspect every payload, every decision, every cost.
+Lightweight, zero-dependency SDK with batched event sending, automatic retries, and graceful shutdown. Works with any framework — OpenAI, Anthropic, LangChain, CrewAI, or raw HTTP calls.
 
 ---
 
-## 🏗️ Architecture
+## Dashboard
 
-```
-┌─────────────────────────────────────────────┐
-│              Your AI Agent                  │
-└──────────────────┬──────────────────────────┘
-                   │ AgentLedger SDK wraps agent
-┌──────────────────▼──────────────────────────┐
-│           AgentLedger SDK                   │
-│  • SHA-256 action hashing                   │
-│  • Human-in-loop gate                       │
-│  • Event streaming                          │
-└──────────────────┬──────────────────────────┘
-                   │ Events via REST / WebSocket
-┌──────────────────▼──────────────────────────┐
-│           AgentLedger Backend               │
-│  Node.js + Express + PostgreSQL + Redis     │
-│  • Audit chain storage                      │
-│  • Approval queue                           │
-│  • Anomaly detection engine                 │
-│  • Compliance report generator              │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│           AgentLedger Dashboard             │
-│  Next.js frontend on Vercel                 │
-│  • Live session replay                      │
-│  • Cost analytics                           │
-│  • Compliance report download               │
-└─────────────────────────────────────────────┘
-```
+> Screenshots coming soon. Try the [live demo](https://agent-ledger-tau.vercel.app) in the meantime.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| SDK | TypeScript |
-| Backend | Node.js + Express |
-| Database | PostgreSQL |
-| Cache / Queue | Redis |
-| Frontend | Next.js 15 + Tailwind CSS |
-| Deployment | Docker + Vercel |
-| Hashing | SHA-256 (crypto module) |
+| **Backend** | NestJS, TypeORM, PostgreSQL, Redis (BullMQ) |
+| **Frontend** | Next.js 15, Tailwind CSS, Recharts |
+| **SDK** | TypeScript, zero dependencies |
+| **Auth** | JWT (access + refresh) + API key (SHA-256 hashed) |
+| **Infra** | Docker, Neon (Postgres), Upstash (Redis), Koyeb, Cloudflare Pages |
 
 ---
 
-## 🐳 Self-Hosting
+## Self-Host
 
 ```bash
-# Clone the repo
 git clone https://github.com/2434addy/AgentLedger.git
 cd AgentLedger
 
-# Copy environment variables
+# Configure
 cp backend/.env.example backend/.env
-# Fill in your DATABASE_URL, REDIS_URL, JWT_SECRET
+# Set DATABASE_URL, REDIS_URL, JWT_SECRET in backend/.env
 
-# Start everything with Docker
+# Run
 docker-compose up -d
 
-# Backend runs on http://localhost:3001
-# Frontend runs on http://localhost:3000
+# Backend  → http://localhost:3001
+# Frontend → http://localhost:3000
 ```
 
----
-
-## 💰 Pricing
-
-| Plan | Price | Agents | Events/month | Compliance Reports |
-|---|---|---|---|---|
-| Free | $0 | 3 | 10,000 | Basic logs only |
-| Pro | $29/mo | Unlimited | 1,000,000 | EU AI Act + SOC 2 |
-| Enterprise | Custom | Unlimited | Unlimited | All frameworks + ISO 42001 |
-
-> 🚀 [Start Free at agent-ledger-tau.vercel.app](https://agent-ledger-tau.vercel.app)
+Runs on any machine with Docker. The free tier of Neon (Postgres) and Upstash (Redis) works for production if you don't want to self-host the data layer.
 
 ---
 
-## 🗺️ Roadmap
+## SDK
 
-- [x] SHA-256 tamper-proof audit chain
-- [x] Human-in-loop approval queue
-- [x] Real-time session replay
-- [x] Cost analytics dashboard
-- [x] Anomaly detection
-- [x] EU AI Act / SOC 2 / ISO 42001 reports
-- [ ] AgentLedger MCP server
-- [ ] Slack / PagerDuty alerts
-- [ ] HIPAA compliance reports
-- [ ] SOC 2 Type II certification (Q3 2026)
-- [ ] On-premise / air-gapped deployment
+```bash
+npm install @2434addy/agentledger-sdk
+```
+
+| Method | Description |
+|---|---|
+| `new AgentLedger({ apiKey, baseUrl? })` | Initialize the client |
+| `al.createAgent({ name, modelProvider, modelId })` | Register an agent |
+| `al.createSession({ agentId })` | Start a tracking session |
+| `al.track({ agentId, sessionId, category, level, message })` | Queue an event |
+| `al.flush()` | Send all queued events |
+| `al.shutdown()` | Flush + stop auto-flush timer |
+
+**Event categories:** `agent_lifecycle` `llm_call` `tool_invocation` `user_action` `system` `security` `guardrail`
+
+**Event levels:** `debug` `info` `warn` `error` `fatal`
+
+Full SDK source is in [`sdk/`](./sdk).
 
 ---
 
-## 🤝 Contributing
+## Live Demo
 
-PRs are welcome. For major changes please open an issue first.
+**[agent-ledger-tau.vercel.app](https://agent-ledger-tau.vercel.app)**
+
+---
+
+## Contributing
+
+PRs welcome. Please open an issue first for large changes.
 
 ```bash
 git clone https://github.com/2434addy/AgentLedger.git
 cd AgentLedger
-npm install
-# Create your feature branch
-git checkout -b feat/your-feature
-# Push and open a PR
+
+# Backend
+cd backend && npm install && npm run start:dev
+
+# Frontend (separate terminal)
+cd frontend && npm install && npm run dev
+
+# SDK
+cd sdk && npm install && npm run dev
 ```
 
 ---
 
-## 📄 License
+## License
 
-MIT © 2026 AgentLedger
+MIT
 
 ---
 
 <div align="center">
-  <strong>Built for the EU AI Act era.</strong><br/>
-  <a href="https://agent-ledger-tau.vercel.app">Live Demo</a> ·
-  <a href="https://github.com/2434addy/AgentLedger/issues">Report Bug</a> ·
-  <a href="https://github.com/2434addy/AgentLedger/issues">Request Feature</a>
+
+**Your agents are making decisions. You should be able to see every one.**
+
+[Get Started](https://agent-ledger-tau.vercel.app) &middot; [Report Bug](https://github.com/2434addy/AgentLedger/issues) &middot; [Request Feature](https://github.com/2434addy/AgentLedger/issues)
+
 </div>
