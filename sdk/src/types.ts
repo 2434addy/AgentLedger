@@ -1,54 +1,82 @@
+// ── Config ──────────────────────────────────────────────────────────
 export interface AgentLedgerConfig {
   apiKey: string;
-  baseUrl?: string;          // defaults to https://api.agentledger.io
-  timeout?: number;          // ms, default 5000
-  riskThreshold?: RiskLevel; // auto-flag above this level
+  baseUrl?: string;   // defaults to https://api.agentledger.io/api/v1
+  timeout?: number;   // ms, default 5000
+  flushInterval?: number; // ms, default 5000 — auto-flush batched events
+  maxBatchSize?: number;  // default 50
   debug?: boolean;
 }
 
-export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type EventStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'failed';
-export type ApprovalStatus = 'auto_approved' | 'pending_review' | 'approved' | 'rejected';
+// ── Enums (mirrors backend) ─────────────────────────────────────────
+export type EventCategory =
+  | 'agent_lifecycle'
+  | 'llm_call'
+  | 'tool_invocation'
+  | 'user_action'
+  | 'system'
+  | 'security'
+  | 'guardrail';
 
-export interface AgentEvent {
-  event_id: string;
-  agent_id: string;
-  session_id: string;
-  action: string;
-  input: Record<string, unknown>;
-  output?: Record<string, unknown>;
-  hash: string;
-  prev_hash: string | null;
-  timestamp: string;
-  risk_level: RiskLevel;
-  status: EventStatus;
-  approval_status: ApprovalStatus;
+export type EventLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+// ── Agents ──────────────────────────────────────────────────────────
+export interface CreateAgentInput {
+  name: string;
+  description?: string;
+  modelProvider: string;
+  modelId: string;
   metadata?: Record<string, unknown>;
 }
 
-export interface RunOptions {
-  action?: string;
-  riskLevel?: RiskLevel;
-  requireApproval?: boolean;
-  metadata?: Record<string, unknown>;
-  timeoutMs?: number;
+export interface Agent {
+  id: string;
+  name: string;
+  description: string | null;
+  modelProvider: string;
+  modelId: string;
+  status: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface SessionOptions {
+// ── Sessions ────────────────────────────────────────────────────────
+export interface CreateSessionInput {
+  agentId: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface Session {
+  id: string;
+  agentId: string;
+  status: string;
+  metadata: Record<string, unknown> | null;
+  startedAt: string;
+}
+
+// ── Events ──────────────────────────────────────────────────────────
+export interface TrackEventInput {
+  agentId: string;
   sessionId?: string;
+  category: EventCategory;
+  level: EventLevel;
+  message: string;
   metadata?: Record<string, unknown>;
+  tokensInput?: number;
+  tokensOutput?: number;
+  costUsd?: number;
+  latencyMs?: number;
 }
 
-export interface WrapOptions {
-  defaultRiskLevel?: RiskLevel;
-  requireApproval?: boolean;
-}
-
-export interface AgentLedgerResponse {
-  event_id: string;
+export interface TrackedEvent {
+  id: string;
+  agentId: string;
+  sessionId: string | null;
+  category: EventCategory;
+  level: EventLevel;
+  message: string;
   hash: string;
-  prev_hash: string | null;
-  approval_status: ApprovalStatus;
-  session_id: string;
-  timestamp: string;
+  prevHash: string | null;
+  createdAt: string;
 }

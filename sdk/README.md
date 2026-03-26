@@ -1,6 +1,6 @@
 # @agentledger/sdk
 
-Tamper-proof audit layer for AI agents. SHA-256 hashed audit trails, human-in-loop approvals, and compliance reports (EU AI Act / SOC 2 / ISO 42001).
+TypeScript SDK for AgentLedger — track, audit, and monitor your AI agents.
 
 ## Install
 
@@ -8,79 +8,112 @@ Tamper-proof audit layer for AI agents. SHA-256 hashed audit trails, human-in-lo
 npm install @agentledger/sdk
 ```
 
-## Quick Start (3 lines)
+## Quick Start
 
 ```typescript
-import { AgentLedger } from '@agentledger/sdk';
+import { AgentLedger } from '@agentledger/sdk'
 
-const ledger = new AgentLedger({ apiKey: 'your-api-key' });
-const agent = ledger.wrap('my-agent', myAgentFunction);
-const result = await agent.run({ prompt: 'Hello' });
+const al = new AgentLedger({ apiKey: 'al_live_sk_...' })
+
+// Create an agent
+const agent = await al.createAgent({
+  name: 'My Assistant',
+  description: 'Customer support bot',
+  modelProvider: 'anthropic',
+  modelId: 'claude-sonnet-4-6',
+})
+
+// Create a session
+const session = await al.createSession({ agentId: agent.id })
+
+// Track events (batched automatically)
+al.track({
+  agentId: agent.id,
+  sessionId: session.id,
+  category: 'llm_call',
+  level: 'info',
+  message: 'Called Claude API',
+  metadata: { prompt: 'Hello world' },
+})
+
+// Send all queued events now
+await al.flush()
 ```
 
-## Features
+## API
 
-- **SHA-256 Chain Hashing** — every event is cryptographically chained, tamper-proof
-- **Human-in-Loop** — require human approval before high-risk actions execute
-- **Compliance Reports** — EU AI Act, SOC 2, ISO 42001 ready
-- **Framework Agnostic** — works with LangChain, OpenAI, CrewAI, or any async function
-- **Zero Config** — defaults work out of the box, customize when needed
+### `new AgentLedger(config)`
 
-## Usage
+| Option          | Type     | Default                                    | Description              |
+| --------------- | -------- | ------------------------------------------ | ------------------------ |
+| `apiKey`        | `string` | *required*                                 | Your API key             |
+| `baseUrl`       | `string` | `https://api.agentledger.io/api/v1`        | API base URL             |
+| `timeout`       | `number` | `5000`                                     | Request timeout (ms)     |
+| `flushInterval` | `number` | `5000`                                     | Auto-flush interval (ms) |
+| `maxBatchSize`  | `number` | `50`                                       | Max events per batch     |
+| `debug`         | `boolean`| `false`                                    | Log warnings to console  |
 
-### Wrap any agent function
+### `al.createAgent(input)`
+
+Create a registered agent.
 
 ```typescript
-import { AgentLedger } from '@agentledger/sdk';
-
-const ledger = new AgentLedger({ apiKey: process.env.AGENTLEDGER_API_KEY! });
-
-// Wrap your agent function
-const agent = ledger.wrap('email-agent', sendEmail, {
-  defaultRiskLevel: 'high',
-  requireApproval: true,
-});
-
-// Every call is now tracked with full audit trail
-const result = await agent.run(
-  { to: 'user@example.com', body: 'Hello!' },
-  { action: 'send_email', riskLevel: 'high' }
-);
+const agent = await al.createAgent({
+  name: 'Email Agent',
+  modelProvider: 'openai',
+  modelId: 'gpt-4o',
+})
 ```
 
-### Multi-step sessions
+### `al.createSession(input)`
+
+Start a new session for an agent.
 
 ```typescript
-const session = ledger.session('data-pipeline');
-
-const data = await session.run(fetchData, { source: 'db' }, { action: 'fetch' });
-const cleaned = await session.run(cleanData, data, { action: 'clean' });
-const result = await session.run(analyze, cleaned, {
-  action: 'analyze',
-  riskLevel: 'medium',
-});
+const session = await al.createSession({ agentId: agent.id })
 ```
 
-### Fire-and-forget tracking
+### `al.track(event)`
+
+Queue an event for batched sending. Fires immediately when the batch reaches `maxBatchSize`.
 
 ```typescript
-await ledger.track('monitoring-agent', 'health_check', {
-  status: 'ok',
-  latency: 42,
-});
+al.track({
+  agentId: agent.id,
+  sessionId: session.id,
+  category: 'llm_call',
+  level: 'info',
+  message: 'Generated response',
+  metadata: { model: 'claude-sonnet-4-6' },
+  tokensInput: 150,
+  tokensOutput: 420,
+  latencyMs: 1200,
+})
 ```
 
-## Configuration
+### `al.flush()`
+
+Send all queued events immediately. Returns the created events.
 
 ```typescript
-const ledger = new AgentLedger({
-  apiKey: 'your-api-key',        // required
-  baseUrl: 'https://...',        // default: https://api.agentledger.io
-  timeout: 5000,                 // ms, default: 5000
-  riskThreshold: 'medium',       // auto-flag above this level
-  debug: false,                  // enable console warnings
-});
+const events = await al.flush()
 ```
+
+### `al.shutdown()`
+
+Stop the auto-flush timer and send remaining events. Call before process exit.
+
+```typescript
+process.on('beforeExit', () => al.shutdown())
+```
+
+## Event Categories
+
+`agent_lifecycle` | `llm_call` | `tool_invocation` | `user_action` | `system` | `security` | `guardrail`
+
+## Event Levels
+
+`debug` | `info` | `warn` | `error` | `fatal`
 
 ## License
 

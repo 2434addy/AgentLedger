@@ -1,7 +1,7 @@
 {
-  "name": "@2434addy/sdk",
-  "version": "0.1.0",
-  "description": "Tamper-proof audit layer for AI agents. SHA-256 hashed audit trails, human-in-loop approvals, and EU AI Act / SOC 2 / ISO 42001 compliance reports.",
+  "name": "@2434addy/agentledger-sdk",
+  "version": "0.2.0",
+  "description": "TypeScript SDK for AgentLedger — track, audit, and monitor your AI agents.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -12,6 +12,9 @@
       "require": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
@@ -21,15 +24,11 @@
     "ai-agents",
     "audit-trail",
     "compliance",
-    "eu-ai-act",
-    "soc2",
-    "iso42001",
+    "observability",
+    "monitoring",
     "langchain",
     "openai",
-    "crewai",
-    "observability",
-    "human-in-loop",
-    "sha256"
+    "crewai"
   ],
   "author": "AgentLedger",
   "license": "MIT",
@@ -44,6 +43,5 @@
     "type": "git",
     "url": "https://github.com/2434addy/AgentLedger.git",
     "directory": "sdk"
-  },
-  "homepage": "https://agent-ledger-tau.vercel.app"
+  }
 }
