@@ -58,3 +58,5 @@ docs/package.json
 
 .vercel
 .env*.local
+
+SecondBrain/
