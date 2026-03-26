@@ -1,5 +1,5 @@
 {
-  "name": "@agentledger/sdk",
+  "name": "@2434addy/sdk",
   "version": "0.1.0",
   "description": "Tamper-proof audit layer for AI agents. SHA-256 hashed audit trails, human-in-loop approvals, and EU AI Act / SOC 2 / ISO 42001 compliance reports.",
   "main": "dist/index.js",

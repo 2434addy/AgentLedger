@@ -31,6 +31,11 @@ Thumbs.db
 .claude/worktrees/
 .mcp.json
 
+# Security - certificates and keys
+*.pem
+*.key
+*.cert
+
 # Logs
 *.log
 npm-debug.log*

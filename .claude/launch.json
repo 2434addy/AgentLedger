@@ -6,7 +6,7 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["dist/main.js"],
       "port": 3001,
-      "cwd": "backend",
+      "cwd": "C:/Users/aarti/Documents/AgentLedger/backend",
       "autoPort": false
     },
     {
@@ -14,7 +14,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
-      "cwd": "frontend",
+      "cwd": "C:/Users/aarti/Documents/AgentLedger/frontend",
       "autoPort": false
     }
   ]

@@ -44,7 +44,13 @@
       "Bash(find /c/Users/aarti/Documents/AgentLedger/frontend/src/components -name *.tsx -type f)",
       "Bash(timeout 15 npx ts-node -e \":*)",
       "Bash(echo \"EXIT=$?\")",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find /c/Users/aarti/Documents/AgentLedger -type f \\\\\\(-name *.test.ts -o -name *.spec.ts -o -name *.test.tsx -o -name *.spec.tsx \\\\\\))",
+      "Bash(grep -r \"skip\\\\|xit\\\\|xdescribe\\\\|only\\\\|todo\\\\|pending\" /c/Users/aarti/Documents/AgentLedger/tests --include=*.js --include=*.ts)"
     ]
   }
 }

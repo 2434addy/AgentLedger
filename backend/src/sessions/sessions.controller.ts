@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Req, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Req, UseGuards, ParseUUIDPipe, BadRequestException } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -12,6 +12,9 @@ export class SessionsController {
 
   @Get()
   list(@Req() req: AuthRequest, @Query('agentId') agentId?: string) {
+    if (agentId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentId)) {
+      throw new BadRequestException('agentId must be a valid UUID');
+    }
     return this.sessionsService.listByOrg(req.user.orgId, agentId);
   }
 
