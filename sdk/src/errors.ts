@@ -5,24 +5,9 @@ export class AgentLedgerError extends Error {
   }
 }
 
-export class ApprovalRequiredError extends AgentLedgerError {
-  constructor(public eventId: string, public agentId: string) {
-    super(
-      `Action requires human approval. Event ID: ${eventId}`,
-      'APPROVAL_REQUIRED'
-    );
-  }
-}
-
-export class ApprovalRejectedError extends AgentLedgerError {
-  constructor(public eventId: string) {
-    super(`Action was rejected by human reviewer. Event ID: ${eventId}`, 'APPROVAL_REJECTED');
-  }
-}
-
 export class AuthenticationError extends AgentLedgerError {
   constructor() {
-    super('Invalid AgentLedger API key. Check your apiKey in config.', 'AUTH_ERROR');
+    super('Invalid API key. Check your apiKey in config.', 'AUTH_ERROR');
   }
 }
 
