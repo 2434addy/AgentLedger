@@ -25,7 +25,7 @@ export class AuthService {
 
   async signup(dto: SignupDto) {
     const existing = await this.userRepo.findOne({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email already registered');
+    if (existing) throw new ConflictException('Unable to create account with the provided details');
 
     let slug = dto.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-org';
     const existingOrg = await this.orgRepo.findOne({ where: { slug } });

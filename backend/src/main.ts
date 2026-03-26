@@ -13,11 +13,14 @@ async function bootstrap() {
     crossOriginEmbedderPolicy: false,
   }));
 
-  // HTTPS redirect in production
+  // HTTPS redirect in production — trust proxy must be configured
   if (process.env.NODE_ENV === 'production') {
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.set('trust proxy', 1); // Trust first proxy only
     app.use((req: any, res: any, next: any) => {
-      if (req.headers['x-forwarded-proto'] !== 'https') {
-        return res.redirect(301, `https://${req.headers.host}${req.url}`);
+      if (req.protocol !== 'https') {
+        const allowedHost = process.env.ALLOWED_HOST || req.headers.host;
+        return res.redirect(301, `https://${allowedHost}${req.url}`);
       }
       next();
     });

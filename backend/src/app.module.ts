@@ -24,8 +24,8 @@ import { HealthModule } from './health/health.module';
         type: 'postgres' as const,
         url: config.get<string>('DATABASE_URL'),
         ssl: config.get<string>('NODE_ENV') === 'production'
-          ? { rejectUnauthorized: true }
-          : { rejectUnauthorized: false },
+          ? { rejectUnauthorized: false }
+          : false,
         extra: { max: 5, idleTimeoutMillis: 30000 },
         autoLoadEntities: true,
         synchronize: false,
