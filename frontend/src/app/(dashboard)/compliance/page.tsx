@@ -110,7 +110,7 @@ export default function CompliancePage() {
         <h1>AgentLedger Compliance Report</h1>
         <div class="header">
           <div>
-            <p><strong>Organisation:</strong> ${org?.name || 'My Organisation'}</p>
+            <p><strong>Organisation:</strong> ${escapeHtml(org?.name || 'My Organisation')}</p>
             <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
             <p><strong>Report Type:</strong> AI Agent Compliance Audit</p>
           </div>
@@ -176,7 +176,7 @@ export default function CompliancePage() {
       <head><meta charset='utf-8'></head>
       <body>
         <h1>AgentLedger Compliance Report</h1>
-        <p><strong>Organisation:</strong> ${org?.name || 'My Organisation'}</p>
+        <p><strong>Organisation:</strong> ${escapeHtml(org?.name || 'My Organisation')}</p>
         <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
         <p><strong>Compliance Score:</strong> ${complianceScore}%</p>
         <h2>Compliance Checks</h2>
