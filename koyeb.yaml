@@ -42,5 +42,7 @@ services:
         value: "https://agentledger.pages.dev"
       - key: ALLOWED_HOST
         value: "agentledger-api.koyeb.app"
+      - key: FRONTEND_URL
+        value: "https://agentledger.pages.dev"
       - key: API_KEY_PREFIX
         value: "al_live_sk_"
