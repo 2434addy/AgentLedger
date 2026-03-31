@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi, orgApi, Organisation, AuthResponse } from '@/lib/api';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { authApi, orgApi, Organisation, AuthResponse, setAccessToken, getAccessToken } from '@/lib/api';
 
 interface User {
   id: string;
@@ -27,8 +27,9 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [org, setOrg] = useState<Organisation | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initRef = useRef(false);
 
   const loadOrg = useCallback(async () => {
     try {
@@ -41,8 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const applyAuthResponse = useCallback(
     (data: AuthResponse) => {
-      localStorage.setItem('accessToken', data.accessToken);
+      // Store token in memory only — never localStorage
       setAccessToken(data.accessToken);
+      setAccessTokenState(data.accessToken);
 
       let userData = data.user;
       if (!userData) {
@@ -54,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
       }
       loadOrg();
@@ -62,48 +63,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [loadOrg]
   );
 
-  // Restore session on mount — try silent refresh via httpOnly cookie
+  // On mount: attempt silent refresh via httpOnly cookie
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const storedUser = localStorage.getItem('user');
+    if (initRef.current) return;
+    initRef.current = true;
 
-    if (token && storedUser) {
-      setAccessToken(token);
-      try {
-        const parsed = JSON.parse(storedUser);
-        if (parsed && typeof parsed === 'object') {
-          setUser(parsed);
+    authApi
+      .refresh()
+      .then((res) => {
+        setAccessToken(res.data.accessToken);
+        setAccessTokenState(res.data.accessToken);
+        if (res.data.user) {
+          setUser(res.data.user);
         }
-      } catch {
-        // ignore parse errors
-      }
-      loadOrg().finally(() => setIsLoading(false));
-    } else {
-      // No access token — try silent refresh via httpOnly cookie
-      authApi
-        .refresh()
-        .then((res) => {
-          localStorage.setItem('accessToken', res.data.accessToken);
-          setAccessToken(res.data.accessToken);
-          if (res.data.user) {
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-            setUser(res.data.user);
-          }
-          return loadOrg();
-        })
-        .catch(() => {
-          // No valid session — user needs to log in
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-        })
-        .finally(() => setIsLoading(false));
-    }
+        return loadOrg();
+      })
+      .catch(() => {
+        // No valid session — user needs to log in
+        setAccessToken(null);
+        setAccessTokenState(null);
+        setUser(null);
+      })
+      .finally(() => setIsLoading(false));
   }, [loadOrg]);
-
-  // Persist user to localStorage whenever it changes
-  useEffect(() => {
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-  }, [user]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -127,11 +109,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore logout errors
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    setAccessToken(null);
+    setAccessTokenState(null);
     setUser(null);
     setOrg(null);
-    setAccessToken(null);
   }, []);
 
   const refreshOrg = useCallback(async () => {

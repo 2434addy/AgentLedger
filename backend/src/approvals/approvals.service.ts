@@ -37,11 +37,14 @@ export class ApprovalsService {
   }
 
   async listPending(orgId: string): Promise<Approval[]> {
-    return this.approvalRepo.find({
-      where: { orgId, status: ApprovalStatus.PENDING },
-      order: { createdAt: 'DESC' },
-      relations: ['agent'],
-    });
+    return this.approvalRepo
+      .createQueryBuilder('approval')
+      .leftJoinAndSelect('approval.agent', 'agent')
+      .where('approval.orgId = :orgId', { orgId })
+      .andWhere('approval.status = :status', { status: ApprovalStatus.PENDING })
+      .andWhere('approval.expiresAt > :now', { now: new Date() })
+      .orderBy('approval.createdAt', 'DESC')
+      .getMany();
   }
 
   async findOne(orgId: string, id: string): Promise<Approval> {

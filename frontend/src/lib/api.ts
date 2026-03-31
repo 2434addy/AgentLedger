@@ -1,5 +1,17 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
+// ─── In-memory token storage — never persisted to localStorage ───────────────
+
+let _accessToken: string | null = null;
+
+export function setAccessToken(token: string | null) {
+  _accessToken = token;
+}
+
+export function getAccessToken(): string | null {
+  return _accessToken;
+}
+
 // ─── Response Types ───────────────────────────────────────────────────────────
 
 export interface Organisation {
@@ -187,12 +199,16 @@ const api: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor — attach Bearer token
+// Request interceptor — attach Bearer token and CSRF header
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+  if (_accessToken && config.headers) {
+    config.headers.Authorization = `Bearer ${_accessToken}`;
+  }
+  // Send CSRF token from cookie for state-changing requests
+  if (typeof document !== 'undefined') {
+    const csrfCookie = document.cookie.split('; ').find(c => c.startsWith('csrf-token='));
+    if (csrfCookie) {
+      config.headers['X-CSRF-Token'] = csrfCookie.split('=')[1];
     }
   }
   return config;
@@ -232,18 +248,13 @@ api.interceptors.response.use(
           { withCredentials: true }
         );
         const newToken = res.data.accessToken;
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('accessToken', newToken);
-        }
+        _accessToken = newToken;
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (err) {
         processQueue(err, null);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-        }
+        _accessToken = null;
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

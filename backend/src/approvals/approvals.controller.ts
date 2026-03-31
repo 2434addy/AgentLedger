@@ -12,13 +12,15 @@ import {
 } from '@nestjs/common';
 import { ApprovalsService } from './approvals.service';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CreateApprovalDto } from './dto/create-approval.dto';
 import { ReviewApprovalDto } from './dto/review-approval.dto';
 import { AuthRequest } from '../common/interfaces/request.interface';
 import { ApprovalStatus } from './entities/approval.entity';
 
 @Controller('approvals')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(CombinedAuthGuard, RolesGuard)
 export class ApprovalsController {
   constructor(private readonly approvalsService: ApprovalsService) {}
 
@@ -43,6 +45,7 @@ export class ApprovalsController {
   }
 
   @Patch(':id/approve')
+  @Roles('owner', 'admin')
   approve(
     @Req() req: AuthRequest,
     @Param('id', ParseUUIDPipe) id: string,
@@ -52,6 +55,7 @@ export class ApprovalsController {
   }
 
   @Patch(':id/reject')
+  @Roles('owner', 'admin')
   reject(
     @Req() req: AuthRequest,
     @Param('id', ParseUUIDPipe) id: string,

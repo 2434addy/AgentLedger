@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Param, Query, Req, UseGuards, ParseUUIDPipe, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Req, UseGuards, ParseUUIDPipe, ParseIntPipe, DefaultValuePipe, BadRequestException } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
 import { CreateEventsDto, CreateEventItemDto } from './dto/create-events.dto';
 import { AuthRequest } from '../common/interfaces/request.interface';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Controller('events')
 @UseGuards(CombinedAuthGuard)
@@ -20,6 +22,14 @@ export class EventsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('cursor') cursor?: string,
   ) {
+    // Validate optional UUID params to avoid 500 from malformed values
+    if (sessionId && !UUID_REGEX.test(sessionId)) {
+      throw new BadRequestException('sessionId must be a valid UUID');
+    }
+    if (agentId && !UUID_REGEX.test(agentId)) {
+      throw new BadRequestException('agentId must be a valid UUID');
+    }
+
     const safeLimit = Math.min(Math.max(limit ?? 100, 1), 500);
     const safePage = Math.max(page ?? 1, 1);
     return this.eventsService.listByOrg(req.user.orgId, {
@@ -37,6 +47,9 @@ export class EventsController {
   create(@Req() req: AuthRequest, @Body() body: CreateEventsDto | CreateEventItemDto) {
     // Support both single event and batch format
     if ('events' in body && Array.isArray((body as CreateEventsDto).events)) {
+      if ((body as CreateEventsDto).events.length > 500) {
+        throw new BadRequestException('events array must not contain more than 500 items');
+      }
       return this.eventsService.bulkCreate(req.user.orgId, body as CreateEventsDto);
     }
     // Single event — wrap in batch format

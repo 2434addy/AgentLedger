@@ -1,6 +1,7 @@
 import { IsArray, ValidateNested, IsString, IsEnum, IsOptional, IsNumber, IsDateString, MaxLength, IsUUID, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EventCategory, EventLevel } from '../entities/event.entity';
+import { MaxJsonSize } from '../../common/validators/max-json-size.validator';
 
 export class CreateEventItemDto {
   @IsUUID('4')
@@ -21,6 +22,7 @@ export class CreateEventItemDto {
   message: string;
 
   @IsOptional()
+  @MaxJsonSize(65536)
   payload?: Record<string, unknown>;
 
   @IsNumber()
@@ -40,9 +42,11 @@ export class CreateEventItemDto {
   latencyMs?: number;
 
   @IsOptional()
+  @MaxJsonSize(65536)
   stateBefore?: Record<string, unknown>;
 
   @IsOptional()
+  @MaxJsonSize(65536)
   stateAfter?: Record<string, unknown>;
 
   @IsDateString()

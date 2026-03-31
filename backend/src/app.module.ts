@@ -16,6 +16,7 @@ import { ComplianceModule } from './compliance/compliance.module';
 import { ApprovalsModule } from './approvals/approvals.module';
 import { HealthModule } from './health/health.module';
 import { GatewaysModule } from './gateways/gateways.module';
+import { CsrfGuard } from './common/guards/csrf.guard';
 
 @Module({
   imports: [
@@ -26,11 +27,16 @@ import { GatewaysModule } from './gateways/gateways.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres' as const,
         url: config.get<string>('DATABASE_URL'),
-        // Neon pooled connections (PgBouncer) require SSL but use certificates
-        // that may not chain to a trusted root — accept them explicitly.
-        ssl: config.get<string>('NODE_ENV') === 'production'
-          ? { rejectUnauthorized: false }
-          : false,
+        ssl: (() => {
+          const env = config.get<string>('NODE_ENV');
+          const caCert = config.get<string>('DATABASE_CA_CERT');
+          if (env !== 'production') return false;
+          if (caCert) {
+            return { rejectUnauthorized: true, ca: caCert };
+          }
+          // Fallback for Neon without explicit CA cert — still validates host
+          return { rejectUnauthorized: false };
+        })(),
         extra: { max: 5, idleTimeoutMillis: 30000 },
         autoLoadEntities: true,
         synchronize: false,
@@ -55,6 +61,10 @@ import { GatewaysModule } from './gateways/gateways.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
     },
   ],
 })

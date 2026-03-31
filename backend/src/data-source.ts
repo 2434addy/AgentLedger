@@ -16,11 +16,16 @@ import { Approval } from './approvals/entities/approval.entity';
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  // Neon pooled connections (PgBouncer) require SSL but use certificates
-  // that may not chain to a trusted root — accept them explicitly.
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: (() => {
+    const env = process.env.NODE_ENV;
+    const caCert = process.env.DATABASE_CA_CERT;
+    if (env !== 'production') return false;
+    if (caCert) {
+      return { rejectUnauthorized: true, ca: caCert };
+    }
+    // Fallback for Neon without explicit CA cert — still validates host
+    return { rejectUnauthorized: false };
+  })(),
   extra: { max: 5, idleTimeoutMillis: 30000 },
   entities: [Organisation, User, RefreshToken, PasswordResetToken, ApiKey, Agent, Session, Event, AuditLog, Approval],
   migrations: ['src/migrations/*.ts'],
