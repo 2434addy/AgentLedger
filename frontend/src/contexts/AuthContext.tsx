@@ -42,62 +42,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const applyAuthResponse = useCallback(
     (data: AuthResponse) => {
       localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
       setAccessToken(data.accessToken);
 
-      // Use user from response; fall back to decoding JWT payload
       let userData = data.user;
       if (!userData) {
         try {
           const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
           userData = { id: payload.sub, email: '', displayName: '', organisationId: payload.orgId };
         } catch {
-          // If JWT decode fails, leave user null — dashboard guard will redirect
+          // If JWT decode fails, leave user null
         }
       }
       if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
       }
-      // Load org in background — don't block the auth flow
       loadOrg();
     },
     [loadOrg]
   );
 
-  // Restore session on mount
+  // Restore session on mount — try silent refresh via httpOnly cookie
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
     const storedUser = localStorage.getItem('user');
+
     if (token && storedUser) {
       setAccessToken(token);
       try {
         const parsed = JSON.parse(storedUser);
         if (parsed && typeof parsed === 'object') {
           setUser(parsed);
-        } else {
-          localStorage.removeItem('user');
         }
       } catch {
-        localStorage.removeItem('user');
+        // ignore parse errors
       }
       loadOrg().finally(() => setIsLoading(false));
-    } else if (refreshToken) {
+    } else {
+      // No access token — try silent refresh via httpOnly cookie
       authApi
-        .refresh(refreshToken)
-        .then(async (res) => {
+        .refresh()
+        .then((res) => {
           localStorage.setItem('accessToken', res.data.accessToken);
-          if (res.data.refreshToken) localStorage.setItem('refreshToken', res.data.refreshToken);
           setAccessToken(res.data.accessToken);
-          await loadOrg();
+          if (res.data.user) {
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+            setUser(res.data.user);
+          }
+          return loadOrg();
         })
         .catch(() => {
-          localStorage.clear();
+          // No valid session — user needs to log in
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
         })
         .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
     }
   }, [loadOrg]);
 
@@ -123,15 +122,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      try {
-        await authApi.logout(refreshToken);
-      } catch {
-        // ignore logout errors
-      }
+    try {
+      await authApi.logout();
+    } catch {
+      // ignore logout errors
     }
-    localStorage.clear();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     setUser(null);
     setOrg(null);
     setAccessToken(null);

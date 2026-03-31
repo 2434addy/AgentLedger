@@ -33,7 +33,7 @@ al.track({
   category: 'llm_call',
   level: 'info',
   message: 'Called Claude API',
-  metadata: { prompt: 'Hello world' },
+  payload: { prompt: 'Hello world' },
 })
 
 // Send all queued events now
@@ -84,7 +84,7 @@ al.track({
   category: 'llm_call',
   level: 'info',
   message: 'Generated response',
-  metadata: { model: 'claude-sonnet-4-6' },
+  payload: { model: 'claude-sonnet-4-6' },
   tokensInput: 150,
   tokensOutput: 420,
   latencyMs: 1200,

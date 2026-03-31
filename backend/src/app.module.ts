@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { RedisModule } from './common/modules/redis.module';
 import { AuthModule } from './auth/auth.module';
 import { OrganisationsModule } from './organisations/organisations.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
@@ -12,7 +13,9 @@ import { EventsModule } from './events/events.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AnomalyModule } from './anomalies/anomaly.module';
 import { ComplianceModule } from './compliance/compliance.module';
+import { ApprovalsModule } from './approvals/approvals.module';
 import { HealthModule } from './health/health.module';
+import { GatewaysModule } from './gateways/gateways.module';
 
 @Module({
   imports: [
@@ -23,6 +26,8 @@ import { HealthModule } from './health/health.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres' as const,
         url: config.get<string>('DATABASE_URL'),
+        // Neon pooled connections (PgBouncer) require SSL but use certificates
+        // that may not chain to a trusted root — accept them explicitly.
         ssl: config.get<string>('NODE_ENV') === 'production'
           ? { rejectUnauthorized: false }
           : false,
@@ -32,6 +37,7 @@ import { HealthModule } from './health/health.module';
       }),
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    RedisModule,
     AuthModule,
     OrganisationsModule,
     ApiKeysModule,
@@ -41,7 +47,9 @@ import { HealthModule } from './health/health.module';
     AnalyticsModule,
     AnomalyModule,
     ComplianceModule,
+    ApprovalsModule,
     HealthModule,
+    GatewaysModule,
   ],
   providers: [
     {

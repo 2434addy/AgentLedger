@@ -62,7 +62,7 @@ export interface TrackEventInput {
   category: EventCategory;
   level: EventLevel;
   message: string;
-  metadata?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
   tokensInput?: number;
   tokensOutput?: number;
   costUsd?: number;

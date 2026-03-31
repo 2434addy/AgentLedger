@@ -10,9 +10,10 @@ import { AuthModule } from '../auth/auth.module';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
+import { GatewaysModule } from '../gateways/gateways.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Event, Session, Agent, ApiKey]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Event, Session, Agent, ApiKey]), AuthModule, GatewaysModule],
   controllers: [EventsController],
   providers: [EventsService, JwtAuthGuard, ApiKeyGuard, CombinedAuthGuard],
   exports: [EventsService],

@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Video,
   Shield,
+  ShieldCheck,
   Settings,
   LogOut,
   ChevronRight,
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/cost-analytics', label: 'Cost Analytics', icon: DollarSign },
   { href: '/anomalies', label: 'Anomaly Detection', icon: AlertTriangle },
   { href: '/session-replay', label: 'Session Replay', icon: Video },
+  { href: '/approvals', label: 'Approvals', icon: ShieldCheck },
   { href: '/compliance', label: 'Compliance', icon: Shield },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];

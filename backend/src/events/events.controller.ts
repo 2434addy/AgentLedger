@@ -18,10 +18,19 @@ export class EventsController {
     @Query('level') level?: string,
     @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit?: number,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('cursor') cursor?: string,
   ) {
     const safeLimit = Math.min(Math.max(limit ?? 100, 1), 500);
     const safePage = Math.max(page ?? 1, 1);
-    return this.eventsService.listByOrg(req.user.orgId, { sessionId, agentId, category, level, limit: safeLimit, page: safePage });
+    return this.eventsService.listByOrg(req.user.orgId, {
+      sessionId,
+      agentId,
+      category,
+      level,
+      limit: safeLimit,
+      page: safePage,
+      cursor,
+    });
   }
 
   @Post()
@@ -37,6 +46,11 @@ export class EventsController {
   @Get('verify')
   verifyAll(@Req() req: AuthRequest) {
     return this.eventsService.verifyByOrg(req.user.orgId);
+  }
+
+  @Get('verify-chain')
+  verifyChain(@Req() req: AuthRequest) {
+    return this.eventsService.verifyChain(req.user.orgId);
   }
 
   @Get(':id')
