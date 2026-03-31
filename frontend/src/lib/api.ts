@@ -12,7 +12,6 @@ export interface Organisation {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: {
     id: string;
     email: string;
@@ -72,6 +71,9 @@ export interface Event {
   tokensOutput: number | null;
   costUsd: number | null;
   timestamp: string;
+  hash: string | null;
+  prevHash: string | null;
+  seqNumber: number | null;
 }
 
 // Backend returns raw SQL aggregation arrays — all numeric fields are strings
@@ -125,6 +127,50 @@ export interface ComplianceCheck {
   status: 'pass' | 'warn' | 'fail';
 }
 
+export interface ComplianceReportGeneratedSection {
+  id: string;
+  title: string;
+  status: 'pass' | 'warn' | 'fail';
+  score: number;
+  evidence: string;
+  recommendation: string;
+  eventCount: number;
+}
+
+export interface ComplianceReportGenerated {
+  framework: string;
+  frameworkName: string;
+  orgId: string;
+  generatedAt: string;
+  overallScore: number;
+  overallStatus: 'pass' | 'warn' | 'fail';
+  sections: ComplianceReportGeneratedSection[];
+  summary: {
+    totalEventsAnalyzed: number;
+    totalAuditLogsAnalyzed: number;
+    sectionsPass: number;
+    sectionsWarn: number;
+    sectionsFail: number;
+  };
+}
+
+export interface Approval {
+  id: string;
+  orgId: string;
+  agentId: string;
+  sessionId: string | null;
+  type: 'tool_execution' | 'data_access' | 'cost_threshold' | 'custom';
+  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  payload: Record<string, unknown>;
+  requestedBy: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewComment: string | null;
+  expiresAt: string;
+  createdAt: string;
+  agent?: Agent;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
@@ -138,6 +184,7 @@ const api: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
+  withCredentials: true,
 });
 
 // Request interceptor — attach Bearer token
@@ -178,27 +225,24 @@ api.interceptors.response.use(
       }
       originalRequest._retry = true;
       isRefreshing = true;
-      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-      if (!refreshToken) {
-        isRefreshing = false;
-        return Promise.reject(error);
-      }
       try {
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/auth/refresh`,
-          { refreshToken }
+          {},
+          { withCredentials: true }
         );
         const newToken = res.data.accessToken;
-        localStorage.setItem('accessToken', newToken);
-        if (res.data.refreshToken) localStorage.setItem('refreshToken', res.data.refreshToken);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('accessToken', newToken);
+        }
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (err) {
         processQueue(err, null);
         if (typeof window !== 'undefined') {
-          localStorage.clear();
-          // Let the dashboard layout's auth guard handle the redirect
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
         }
         return Promise.reject(err);
       } finally {
@@ -216,10 +260,14 @@ export const authApi = {
     api.post<AuthResponse>('/api/v1/auth/signup', data),
   login: (data: { email: string; password: string }) =>
     api.post<AuthResponse>('/api/v1/auth/login', data),
-  refresh: (refreshToken: string) =>
-    api.post<{ accessToken: string; refreshToken: string }>('/api/v1/auth/refresh', { refreshToken }),
-  logout: (refreshToken: string) =>
-    api.post('/api/v1/auth/logout', { refreshToken }),
+  refresh: () =>
+    api.post<{ accessToken: string; user: AuthResponse['user'] }>('/api/v1/auth/refresh'),
+  logout: () =>
+    api.post('/api/v1/auth/logout'),
+  forgotPassword: (email: string) =>
+    api.post<{ message: string }>('/api/v1/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) =>
+    api.post<{ message: string }>('/api/v1/auth/reset-password', { token, newPassword }),
 };
 
 // ─── Organisations ────────────────────────────────────────────────────────────
@@ -274,6 +322,12 @@ export const eventsApi = {
   }) => api.get<Event[]>('/api/v1/events', { params }),
   get: (id: string) => api.get<Event>(`/api/v1/events/${id}`),
   create: (data: Partial<Event>) => api.post<Event>('/api/v1/events', data),
+  verify: () =>
+    api.get<{ total: number; valid: number; tampered: number; tamperedIds: string[] }>('/api/v1/events/verify'),
+  verifyChain: () =>
+    api.get<{ total: number; valid: number; broken: number; chainIntact: boolean; brokenLinks: { eventId: string; seqNumber: number; reason: string }[] }>('/api/v1/events/verify-chain'),
+  verifyOne: (id: string) =>
+    api.get<{ id: string; valid: boolean; storedHash: string; recomputedHash: string }>(`/api/v1/events/${id}/verify`),
 };
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
@@ -295,9 +349,27 @@ export const anomaliesApi = {
 
 // ─── Compliance ───────────────────────────────────────────────────────────────
 
+export type ComplianceFramework = 'eu-ai-act' | 'soc2' | 'iso42001';
+
 export const complianceApi = {
   report: () => api.get<ComplianceReport>('/api/v1/compliance/report'),
   checks: () => api.get<ComplianceCheck[]>('/api/v1/compliance/checks'),
+  generate: (framework: ComplianceFramework) =>
+    api.post<ComplianceReportGenerated>('/api/v1/compliance/reports/generate', { framework }),
+};
+
+// ─── Approvals ───────────────────────────────────────────────────────────────
+
+export const approvalsApi = {
+  list: (params?: { status?: string }) =>
+    api.get<Approval[]>('/api/v1/approvals', { params }),
+  listPending: () =>
+    api.get<Approval[]>('/api/v1/approvals/pending'),
+  get: (id: string) => api.get<Approval>(`/api/v1/approvals/${id}`),
+  approve: (id: string, comment?: string) =>
+    api.patch<Approval>(`/api/v1/approvals/${id}/approve`, { comment }),
+  reject: (id: string, comment?: string) =>
+    api.patch<Approval>(`/api/v1/approvals/${id}/reject`, { comment }),
 };
 
 export default api;

@@ -118,7 +118,15 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <label className="block text-white/70 text-sm mb-1.5">Password</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-white/70 text-sm">Password</label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <input
                     suppressHydrationWarning

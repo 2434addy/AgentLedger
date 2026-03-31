@@ -1,4 +1,4 @@
-import { IsArray, ValidateNested, IsString, IsEnum, IsOptional, IsNumber, IsDateString, MaxLength, IsUUID } from 'class-validator';
+import { IsArray, ValidateNested, IsString, IsEnum, IsOptional, IsNumber, IsDateString, MaxLength, IsUUID, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EventCategory, EventLevel } from '../entities/event.entity';
 
@@ -52,6 +52,7 @@ export class CreateEventItemDto {
 
 export class CreateEventsDto {
   @IsArray()
+  @ArrayMaxSize(500)
   @ValidateNested({ each: true })
   @Type(() => CreateEventItemDto)
   events: CreateEventItemDto[];

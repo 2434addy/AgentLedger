@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Shield, Zap, BarChart3, Search, Lock, Bell, ArrowRight, Check, UserCheck, CheckCircle, Fingerprint, AlertTriangle, FileText, Download, Copy, ExternalLink } from 'lucide-react';
+import HashChainDemo from '@/components/HashChainDemo';
 
 const features = [
   {
@@ -601,17 +602,7 @@ export default function LandingPage() {
                     </div>
                   )}
                   {'codeSnippet' in feature && feature.codeSnippet && (
-                    <pre className="mt-3 p-3 rounded-lg text-[11px] font-mono leading-relaxed overflow-x-auto"
-                      style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <code className="text-emerald-400/80">
-{`{
-  action_id: "act_9f3k2m",
-  hash: "sha256:a3f8c2e1...",
-  prev_hash: "sha256:b2e7d1f4...",
-  timestamp: "2026-03-23T10:42:11Z"
-}`}
-                      </code>
-                    </pre>
+                    <HashChainDemo />
                   )}
                   {'badge' in feature && feature.badge && (
                     <span className="inline-block mt-3 px-2.5 py-0.5 rounded-full text-xs font-semibold"

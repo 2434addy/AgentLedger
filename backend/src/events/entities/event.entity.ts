@@ -71,6 +71,12 @@ export class Event {
   @Column({ type: 'varchar', length: 64, nullable: true })
   hash: string | null;
 
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  prevHash: string | null;
+
+  @Column({ type: 'bigint', nullable: true })
+  seqNumber: number | null;
+
   @Column({ type: 'boolean', default: false })
   tampered: boolean;
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Req, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
 import { CreateAgentDto } from './dto/create-agent.dto';
@@ -11,8 +11,15 @@ export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
 
   @Get()
-  list(@Req() req: AuthRequest) {
-    return this.agentsService.listByOrg(req.user.orgId);
+  list(
+    @Req() req: AuthRequest,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.agentsService.listByOrg(req.user.orgId, {
+      cursor,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
   }
 
   @Post()

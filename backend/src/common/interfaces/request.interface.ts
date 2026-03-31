@@ -6,6 +6,7 @@ export interface AuthUser {
   role: string;
   isApiKey?: boolean;
   userId?: string;
+  plan?: string;
 }
 
 export interface AuthRequest extends Request {

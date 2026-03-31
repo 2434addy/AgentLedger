@@ -3,12 +3,50 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Clock, Zap, DollarSign, Play, Pause, SkipForward, RotateCcw } from 'lucide-react';
+import {
+  ChevronDown, ChevronRight, Clock, Zap, DollarSign,
+  Play, Pause, SkipForward, RotateCcw,
+  Shield, ShieldAlert, Link2, Link2Off, Check, X, Loader2,
+} from 'lucide-react';
 import { sessionsApi, eventsApi, Session, Event } from '@/lib/api';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Badge, categoryVariant, levelVariant, statusVariant } from '@/components/ui/Badge';
 import { formatDate, formatTime } from '@/lib/formatDate';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface ChainVerifyResult {
+  total: number;
+  valid: number;
+  broken: number;
+  chainIntact: boolean;
+  brokenLinks: { eventId: string; seqNumber: number; reason: string }[];
+}
+
+interface EventVerifyResult {
+  id: string;
+  valid: boolean;
+  storedHash: string;
+  recomputedHash: string;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function truncateHash(hash: string | null, chars = 12): string {
+  if (!hash) return 'N/A';
+  if (hash.length <= chars * 2 + 3) return hash;
+  return `${hash.slice(0, chars)}...${hash.slice(-chars)}`;
+}
+
+/** Returns true when event[i].prevHash === event[i-1].hash (client-side check). */
+function clientLinkValid(events: Event[], index: number): boolean | null {
+  if (index === 0) return null; // first event has no predecessor
+  const prev = events[index - 1];
+  const curr = events[index];
+  if (prev.hash === null || curr.prevHash === null) return null;
+  return curr.prevHash === prev.hash;
+}
 
 const categoryColors: Record<string, string> = {
   llm_call: 'rgba(124,58,237,0.15)',
@@ -31,6 +69,8 @@ const categoryBorderColors: Record<string, string> = {
   security: 'rgba(239,68,68,0.3)',
   guardrail: 'rgba(245,158,11,0.3)',
 };
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function JsonTree({ data, depth = 0 }: { data: unknown; depth?: number }) {
   const [expanded, setExpanded] = useState(depth < 2);
@@ -102,6 +142,226 @@ function StatePanel({ label, state, color }: { label: string; state: Record<stri
   );
 }
 
+// ─── Chain Integrity Badge ─────────────────────────────────────────────────────
+
+function ChainIntegrityBadge({
+  result,
+  isVerifying,
+  onVerify,
+}: {
+  result: ChainVerifyResult | null;
+  isVerifying: boolean;
+  onVerify: () => void;
+}) {
+  const intact = result?.chainIntact ?? null;
+
+  return (
+    <div className="flex items-center gap-2">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium"
+        style={
+          intact === true
+            ? { background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', color: '#34d399' }
+            : intact === false
+            ? { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171' }
+            : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }
+        }
+      >
+        {intact === true ? (
+          <Shield className="w-3.5 h-3.5" />
+        ) : intact === false ? (
+          <ShieldAlert className="w-3.5 h-3.5" />
+        ) : (
+          <Shield className="w-3.5 h-3.5" />
+        )}
+        {intact === true
+          ? 'Chain Intact'
+          : intact === false
+          ? `Chain Broken (${result!.broken})`
+          : 'Chain Unverified'}
+      </motion.div>
+
+      <button
+        onClick={onVerify}
+        disabled={isVerifying}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all disabled:opacity-50"
+        style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: 'rgba(167,139,250,0.9)' }}
+      >
+        {isVerifying ? (
+          <Loader2 className="w-3 h-3 animate-spin" />
+        ) : (
+          <Shield className="w-3 h-3" />
+        )}
+        {isVerifying ? 'Verifying…' : 'Verify Chain'}
+      </button>
+    </div>
+  );
+}
+
+// ─── Chain Link Connector ──────────────────────────────────────────────────────
+
+function ChainLinkConnector({ valid }: { valid: boolean | null }) {
+  if (valid === null) return null;
+
+  return (
+    <div className="flex items-center justify-center py-0.5 px-3">
+      <div className="flex items-center gap-1">
+        <div
+          className="h-px w-4"
+          style={{
+            borderTop: valid ? '1px solid rgba(16,185,129,0.5)' : '1px dashed rgba(239,68,68,0.5)',
+          }}
+        />
+        {valid ? (
+          <Link2 className="w-3 h-3 text-emerald-400/60" />
+        ) : (
+          <Link2Off className="w-3 h-3 text-red-400/80" />
+        )}
+        <div
+          className="h-px w-4"
+          style={{
+            borderTop: valid ? '1px solid rgba(16,185,129,0.5)' : '1px dashed rgba(239,68,68,0.5)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Hash Details Panel ────────────────────────────────────────────────────────
+
+function HashDetailsPanel({ event, brokenEventIds }: { event: Event; brokenEventIds: Set<string> }) {
+  const [verifyResult, setVerifyResult] = useState<EventVerifyResult | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
+
+  const hasHashData = event.hash !== null || event.prevHash !== null || event.seqNumber !== null;
+  const isBroken = brokenEventIds.has(event.id);
+
+  const handleVerify = useCallback(async () => {
+    setIsVerifying(true);
+    setVerifyError('');
+    setVerifyResult(null);
+    try {
+      const res = await eventsApi.verifyOne(event.id);
+      setVerifyResult(res.data);
+    } catch {
+      setVerifyError('Verification request failed.');
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [event.id]);
+
+  const hashColor = verifyResult
+    ? verifyResult.valid
+      ? 'rgba(52,211,153,0.9)'
+      : 'rgba(248,113,113,0.9)'
+    : isBroken
+    ? 'rgba(248,113,113,0.9)'
+    : 'rgba(255,255,255,0.55)';
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5 text-white/40 text-xs">
+          <Link2 className="w-3 h-3" />
+          Hash Chain
+        </div>
+        <button
+          onClick={handleVerify}
+          disabled={isVerifying}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all disabled:opacity-50"
+          style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: 'rgba(167,139,250,0.9)' }}
+        >
+          {isVerifying ? <Loader2 className="w-3 h-3 animate-spin" /> : <Shield className="w-3 h-3" />}
+          {isVerifying ? 'Verifying…' : 'Verify'}
+        </button>
+      </div>
+
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        {/* Seq number */}
+        <div className="flex items-center justify-between">
+          <span className="text-white/40 text-xs">Seq #</span>
+          <span className="text-white/70 text-xs font-mono">
+            {event.seqNumber !== null ? event.seqNumber : 'N/A'}
+          </span>
+        </div>
+
+        {/* Current hash */}
+        <div>
+          <div className="text-white/40 text-xs mb-1">Hash</div>
+          {event.hash ? (
+            <div className="flex items-center gap-2">
+              <span
+                className="text-xs font-mono break-all leading-relaxed"
+                style={{ color: hashColor }}
+                title={event.hash}
+              >
+                {truncateHash(event.hash)}
+              </span>
+              {verifyResult && (
+                <span>
+                  {verifyResult.valid
+                    ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    : <X className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-white/30 text-xs font-mono">N/A</span>
+          )}
+        </div>
+
+        {/* Prev hash */}
+        <div>
+          <div className="text-white/40 text-xs mb-1">Prev Hash</div>
+          {event.prevHash ? (
+            <span
+              className="text-xs font-mono break-all leading-relaxed text-white/50"
+              title={event.prevHash}
+            >
+              {truncateHash(event.prevHash)}
+            </span>
+          ) : (
+            <span className="text-white/30 text-xs font-mono">{event.seqNumber === 0 ? 'genesis' : 'N/A'}</span>
+          )}
+        </div>
+
+        {/* Verify result detail */}
+        {verifyResult && !verifyResult.valid && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="pt-2 border-t"
+            style={{ borderColor: 'rgba(239,68,68,0.2)' }}
+          >
+            <div className="text-red-400/80 text-xs mb-1">Tamper detected</div>
+            <div className="text-white/40 text-xs font-mono">
+              <div>Stored: <span className="text-red-400/70">{truncateHash(verifyResult.storedHash)}</span></div>
+              <div>Computed: <span className="text-emerald-400/70">{truncateHash(verifyResult.recomputedHash)}</span></div>
+            </div>
+          </motion.div>
+        )}
+
+        {verifyError && (
+          <div className="text-red-400/70 text-xs">{verifyError}</div>
+        )}
+
+        {!hasHashData && (
+          <div className="text-white/25 text-xs">No hash data — legacy event</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function SessionReplayPage() {
   const { id } = useParams<{ id: string }>();
   const [session, setSession] = useState<Session | null>(null);
@@ -115,6 +375,11 @@ export default function SessionReplayPage() {
   const [replayIndex, setReplayIndex] = useState(0);
   const replayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Chain verification state
+  const [chainResult, setChainResult] = useState<ChainVerifyResult | null>(null);
+  const [isVerifyingChain, setIsVerifyingChain] = useState(false);
+  const brokenEventIds = new Set<string>(chainResult?.brokenLinks.map(l => l.eventId) ?? []);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -139,7 +404,7 @@ export default function SessionReplayPage() {
         setEvents(evs);
         if (evs.length > 0) setSelectedEvent(evs[0]);
       } catch {
-        // Session loaded but events failed - still show the session
+        // Session loaded but events failed — still show the session
         setEvents([]);
       }
     } catch {
@@ -150,6 +415,18 @@ export default function SessionReplayPage() {
   }, [id]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  const handleVerifyChain = useCallback(async () => {
+    setIsVerifyingChain(true);
+    try {
+      const res = await eventsApi.verifyChain();
+      setChainResult(res.data);
+    } catch {
+      // Silently fail — badge stays in "unverified" state
+    } finally {
+      setIsVerifyingChain(false);
+    }
+  }, []);
 
   // Replay logic
   const stopReplay = useCallback(() => {
@@ -168,11 +445,9 @@ export default function SessionReplayPage() {
     setReplayIndex(index);
     setSelectedEvent(events[index]);
 
-    // Scroll the timeline item into view
     const el = document.getElementById(`event-${events[index].id}`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    // Compute delay: use real time gap between events, clamped to 0.3s–2s
     let delay = 1000;
     if (index + 1 < events.length) {
       const gap = new Date(events[index + 1].timestamp).getTime() - new Date(events[index].timestamp).getTime();
@@ -191,10 +466,8 @@ export default function SessionReplayPage() {
     if (isReplaying) {
       stopReplay();
     } else if (replayIndex >= events.length - 1) {
-      // Restart from beginning
       startReplay();
     } else {
-      // Resume from current position
       setIsReplaying(true);
       advanceReplay(replayIndex + 1);
     }
@@ -214,7 +487,6 @@ export default function SessionReplayPage() {
     }
   }, [replayIndex, events]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
@@ -224,8 +496,6 @@ export default function SessionReplayPage() {
   if (isLoading) return <TableSkeleton rows={6} />;
   if (error) return <ErrorState message={error} onRetry={loadData} />;
   if (!session) return null;
-
-  const hasStateData = events.some(e => e.stateBefore || e.stateAfter);
 
   return (
     <div className="space-y-4">
@@ -257,6 +527,16 @@ export default function SessionReplayPage() {
           <div>
             <div className="text-white/40 text-xs mb-0.5">Events</div>
             <div className="text-white/70 text-sm">{events.length}</div>
+          </div>
+
+          {/* Chain Integrity indicator */}
+          <div className="ml-auto">
+            <div className="text-white/40 text-xs mb-1.5">Chain Integrity</div>
+            <ChainIntegrityBadge
+              result={chainResult}
+              isVerifying={isVerifyingChain}
+              onVerify={handleVerifyChain}
+            />
           </div>
         </div>
       </div>
@@ -311,58 +591,96 @@ export default function SessionReplayPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Left: event timeline */}
-        <div ref={timelineRef} className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+        <div ref={timelineRef} className="lg:col-span-2 space-y-0 max-h-[70vh] overflow-y-auto pr-1">
           <div className="text-white/40 text-xs uppercase font-medium px-1 mb-3">Event Timeline</div>
           {events.length === 0 ? (
             <div className="text-center py-8 text-white/30 text-sm">No events in this session yet</div>
           ) : (
-            events.map((event, i) => (
-              <motion.button
-                key={event.id}
-                id={`event-${event.id}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.03 }}
-                onClick={() => {
-                  setSelectedEvent(event);
-                  setReplayIndex(i);
-                }}
-                className="w-full text-left rounded-xl p-3 transition-all"
-                style={{
-                  background: selectedEvent?.id === event.id
-                    ? categoryColors[event.category]
-                    : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${selectedEvent?.id === event.id
-                    ? categoryBorderColors[event.category]
-                    : 'rgba(255,255,255,0.06)'}`,
-                  boxShadow: isReplaying && replayIndex === i
-                    ? `0 0 12px ${categoryBorderColors[event.category]}`
-                    : 'none',
-                }}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <Badge variant={categoryVariant(event.category)} className="text-xs">
-                    {event.category.replace('_', ' ')}
-                  </Badge>
-                  <span className="text-white/30 text-xs">
-                    {formatTime(event.timestamp)}
-                  </span>
-                </div>
-                <div className="text-white/70 text-xs truncate">{event.message}</div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  {event.latencyMs !== null && (
-                    <span className="flex items-center gap-1 text-white/30 text-xs">
-                      <Clock className="w-2.5 h-2.5" /> {event.latencyMs}ms
-                    </span>
+            events.map((event, i) => {
+              const linkValid = clientLinkValid(events, i);
+              const isServerBroken = brokenEventIds.has(event.id);
+
+              return (
+                <div key={event.id}>
+                  {/* Chain link connector between events */}
+                  {i > 0 && (
+                    <ChainLinkConnector
+                      valid={isServerBroken ? false : linkValid}
+                    />
                   )}
-                  {(event.stateBefore || event.stateAfter) && (
-                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.2)', color: 'rgba(167,139,250,0.8)' }}>
-                      state
-                    </span>
-                  )}
+
+                  <motion.button
+                    id={`event-${event.id}`}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      setReplayIndex(i);
+                    }}
+                    className="w-full text-left rounded-xl p-3 transition-all"
+                    style={{
+                      background: selectedEvent?.id === event.id
+                        ? categoryColors[event.category]
+                        : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${
+                        isServerBroken
+                          ? 'rgba(239,68,68,0.4)'
+                          : selectedEvent?.id === event.id
+                          ? categoryBorderColors[event.category]
+                          : 'rgba(255,255,255,0.06)'
+                      }`,
+                      boxShadow: isReplaying && replayIndex === i
+                        ? `0 0 12px ${categoryBorderColors[event.category]}`
+                        : isServerBroken
+                        ? '0 0 8px rgba(239,68,68,0.15)'
+                        : 'none',
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <Badge variant={categoryVariant(event.category)} className="text-xs">
+                        {event.category.replace('_', ' ')}
+                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        {/* Per-event hash indicator dot */}
+                        {event.hash !== null && (
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            title={isServerBroken ? 'Tampered' : linkValid === false ? 'Chain mismatch' : 'Hash present'}
+                            style={{
+                              background: isServerBroken || linkValid === false
+                                ? 'rgba(248,113,113,0.8)'
+                                : 'rgba(52,211,153,0.7)',
+                            }}
+                          />
+                        )}
+                        <span className="text-white/30 text-xs">
+                          {formatTime(event.timestamp)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-white/70 text-xs truncate">{event.message}</div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      {event.latencyMs !== null && (
+                        <span className="flex items-center gap-1 text-white/30 text-xs">
+                          <Clock className="w-2.5 h-2.5" /> {event.latencyMs}ms
+                        </span>
+                      )}
+                      {(event.stateBefore || event.stateAfter) && (
+                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.2)', color: 'rgba(167,139,250,0.8)' }}>
+                          state
+                        </span>
+                      )}
+                      {isServerBroken && (
+                        <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.15)', color: 'rgba(248,113,113,0.8)' }}>
+                          <ShieldAlert className="w-2.5 h-2.5" /> tampered
+                        </span>
+                      )}
+                    </div>
+                  </motion.button>
                 </div>
-              </motion.button>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -426,6 +744,9 @@ export default function SessionReplayPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Hash Chain section */}
+                <HashDetailsPanel event={selectedEvent} brokenEventIds={brokenEventIds} />
 
                 {/* State snapshots */}
                 {(selectedEvent.stateBefore || selectedEvent.stateAfter) && (

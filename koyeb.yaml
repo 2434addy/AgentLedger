@@ -32,13 +32,13 @@ services:
         secret: redis-url
       - key: JWT_SECRET
         secret: jwt-secret
-      - key: JWT_REFRESH_SECRET
-        secret: jwt-refresh-secret
       - key: JWT_EXPIRES_IN
         value: "15m"
       - key: JWT_REFRESH_EXPIRES_IN
         value: "7d"
       - key: CORS_ORIGIN
         value: "https://agentledger.pages.dev"
+      - key: ALLOWED_HOST
+        value: "agentledger-api.koyeb.app"
       - key: API_KEY_PREFIX
         value: "al_live_sk_"

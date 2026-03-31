@@ -11,11 +11,20 @@ export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Get()
-  list(@Req() req: AuthRequest, @Query('agentId') agentId?: string) {
+  list(
+    @Req() req: AuthRequest,
+    @Query('agentId') agentId?: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
     if (agentId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentId)) {
       throw new BadRequestException('agentId must be a valid UUID');
     }
-    return this.sessionsService.listByOrg(req.user.orgId, agentId);
+    return this.sessionsService.listByOrg(req.user.orgId, {
+      agentId,
+      cursor,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
   }
 
   @Post()

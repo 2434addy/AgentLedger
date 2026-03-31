@@ -12,11 +12,11 @@ Full re-audit of AgentLedger codebase with live browser testing of all modules. 
 
 | Metric | Count |
 |--------|-------|
-| New findings this session | 3 |
+| New findings this session | 6 |
 | Fixed this session | 1 |
 | Previously fixed (confirmed) | 5 |
-| Remaining architectural | 9 (unchanged from prior audit) |
-| **Overall Risk Level** | **LOW** |
+| Remaining architectural | 14 (expanded from deep audit) |
+| **Overall Risk Level** | **MEDIUM** (due to localStorage token storage) |
 
 ---
 
@@ -111,19 +111,24 @@ All pages tested via Chrome browser automation with screenshots captured.
 
 ---
 
-## Remaining Architectural Issues (From Prior Audit — Unchanged)
+## Remaining Architectural Issues (Expanded from Deep Audit)
 
 | # | Severity | Issue | Status |
 |---|----------|-------|--------|
 | 1 | HIGH | Tokens in localStorage (XSS risk) | Open — needs httpOnly cookies |
 | 2 | HIGH | No RBAC on CRUD operations | Open — needs @Roles() guards |
-| 3 | MEDIUM | No CSRF protection | Open — needed when cookies adopted |
-| 4 | MEDIUM | Audit log entity not wired | Open — needs NestJS interceptor |
-| 5 | MEDIUM | No client-side login rate limiting | Open — needs exponential backoff |
-| 6 | MEDIUM | No React Error Boundaries | Open — needs ErrorBoundary components |
-| 7 | MEDIUM | No per-API-key rate limiting | Open — needs throttle per keyHash |
-| 8 | LOW | No Swagger/OpenAPI docs | Open — needs @nestjs/swagger |
-| 9 | LOW | No session inactivity timeout | Open — needs idle timer |
+| 3 | HIGH | User object in localStorage trusted without server verification | Open — need /me endpoint check on restore |
+| 4 | HIGH | localStorage.clear() wipes all domain data on logout | Open — use removeItem() for specific keys |
+| 5 | MEDIUM | No CSRF protection | Open — needed when cookies adopted |
+| 6 | MEDIUM | Audit log entity not wired | Open — needs NestJS interceptor |
+| 7 | MEDIUM | No client-side login rate limiting | Open — needs exponential backoff |
+| 8 | MEDIUM | No React Error Boundaries | Open — needs ErrorBoundary components |
+| 9 | MEDIUM | No per-API-key rate limiting | Open — needs throttle per keyHash |
+| 10 | MEDIUM | No Content Security Policy (CSP) headers | Open — add via next.config.ts headers |
+| 11 | MEDIUM | Login form missing email format validation | Open — add regex validation |
+| 12 | MEDIUM | Unused js-cookie dependency (attack surface) | Open — remove or implement cookie auth |
+| 13 | LOW | No Swagger/OpenAPI docs | Open — needs @nestjs/swagger |
+| 14 | LOW | No session inactivity timeout | Open — needs idle timer |
 
 ---
 
