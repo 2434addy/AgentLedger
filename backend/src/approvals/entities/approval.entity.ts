@@ -35,7 +35,7 @@ export class Approval {
   @Column()
   agentId: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   sessionId: string | null;
 
   @Column({ type: 'enum', enum: ApprovalType })

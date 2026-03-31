@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsEnum, MaxLength } from 'class-validator';
 import { AgentStatus } from '../entities/agent.entity';
+import { MaxJsonSize } from '../../common/validators/max-json-size.validator';
 
 export class CreateAgentDto {
   @IsString()
@@ -24,5 +25,6 @@ export class CreateAgentDto {
   status?: AgentStatus;
 
   @IsOptional()
+  @MaxJsonSize(16384)
   metadata?: Record<string, unknown>;
 }

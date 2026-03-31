@@ -28,6 +28,8 @@ services:
         value: production
       - key: DATABASE_URL
         secret: database-url
+      - key: DATABASE_CA_CERT
+        secret: database-ca-cert
       - key: REDIS_URL
         secret: redis-url
       - key: JWT_SECRET

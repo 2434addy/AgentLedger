@@ -1,12 +1,14 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AuthRequest } from '../common/interfaces/request.interface';
 
 @Controller('agents')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(CombinedAuthGuard, RolesGuard)
 export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
 
@@ -33,11 +35,13 @@ export class AgentsController {
   }
 
   @Patch(':id')
+  @Roles('owner', 'admin')
   update(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAgentDto) {
     return this.agentsService.update(req.user.orgId, id, dto);
   }
 
   @Delete(':id')
+  @Roles('owner', 'admin')
   remove(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.agentsService.remove(req.user.orgId, id);
   }

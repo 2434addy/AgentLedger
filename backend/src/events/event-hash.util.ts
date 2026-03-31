@@ -12,11 +12,29 @@ interface EventHashData {
 }
 
 /**
+ * Deterministic JSON serialization with sorted keys.
+ * PostgreSQL JSONB returns keys in sorted order, so we must sort
+ * at hash time to ensure creation-time and verification-time hashes match.
+ */
+function canonicalStringify(obj: unknown): string {
+  if (obj === null || obj === undefined) return 'null';
+  if (typeof obj !== 'object') return JSON.stringify(obj);
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(item => canonicalStringify(item)).join(',') + ']';
+  }
+  const sorted = Object.keys(obj as Record<string, unknown>).sort();
+  const entries = sorted.map(
+    key => JSON.stringify(key) + ':' + canonicalStringify((obj as Record<string, unknown>)[key]),
+  );
+  return '{' + entries.join(',') + '}';
+}
+
+/**
  * Computes a standalone SHA-256 hash of the canonical event data.
  * Used for per-event integrity verification (legacy, pre-chain events).
  */
 export function computeEventHash(data: EventHashData): string {
-  const canonical = JSON.stringify({
+  const canonical = canonicalStringify({
     agentId: data.agentId,
     category: data.category,
     level: data.level,
@@ -35,7 +53,7 @@ export function computeEventHash(data: EventHashData): string {
  * Genesis events (first in an org) use empty string for prevHash.
  */
 export function computeChainedHash(data: EventHashData, prevHash: string): string {
-  const canonical = JSON.stringify({
+  const canonical = canonicalStringify({
     agentId: data.agentId,
     category: data.category,
     level: data.level,

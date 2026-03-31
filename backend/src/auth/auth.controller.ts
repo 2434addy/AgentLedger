@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import * as crypto from 'crypto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
@@ -33,6 +34,7 @@ export class AuthController {
   ) {
     const result = await this.authService.signup(dto);
     this.setRefreshCookie(res, result.refreshToken);
+    this.setCsrfCookie(res);
     return { accessToken: result.accessToken, user: result.user };
   }
 
@@ -46,6 +48,7 @@ export class AuthController {
   ) {
     const result = await this.authService.login(dto);
     this.setRefreshCookie(res, result.refreshToken);
+    this.setCsrfCookie(res);
     return { accessToken: result.accessToken, user: result.user };
   }
 
@@ -64,6 +67,7 @@ export class AuthController {
     const dto: RefreshDto = { refreshToken };
     const result = await this.authService.refresh(dto);
     this.setRefreshCookie(res, result.refreshToken);
+    this.setCsrfCookie(res);
     return { accessToken: result.accessToken, user: result.user };
   }
 
@@ -80,6 +84,7 @@ export class AuthController {
       await this.authService.logout({ refreshToken });
     }
     this.clearRefreshCookie(res);
+    this.clearCsrfCookie(res);
     return { message: 'Logged out' };
   }
 
@@ -109,12 +114,32 @@ export class AuthController {
     });
   }
 
+  private setCsrfCookie(res: Response): void {
+    const csrfToken = crypto.randomBytes(32).toString('hex');
+    res.cookie('csrf-token', csrfToken, {
+      httpOnly: false, // Must be readable by JavaScript
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // Match refresh token lifetime
+    });
+  }
+
   private clearRefreshCookie(res: Response): void {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/v1/auth',
+    });
+  }
+
+  private clearCsrfCookie(res: Response): void {
+    res.clearCookie('csrf-token', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
     });
   }
 }
