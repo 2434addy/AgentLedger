@@ -17,14 +17,14 @@
 
 **Black Box Recorder for AI Agents**
 
-Every LLM call. Every tool use. Every token spent. Recorded, searchable, and replayable.
+Tamper-proof SHA-256 audit trails, human-in-loop approval queues, session replay, compliance reports, cost analytics, and anomaly detection.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-agent--ledger--tau.vercel.app-blueviolet?style=flat-square)](https://agent-ledger-tau.vercel.app)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/2434addy/AgentLedger/pulls)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-agentledger.pages.dev-blueviolet?style=flat-square)](https://agentledger.pages.dev)
+[![npm](https://img.shields.io/badge/SDK-@2434addy/agentledger--sdk-red?style=flat-square&logo=npm)](https://www.npmjs.com/package/@2434addy/agentledger-sdk)
 
-[Live Demo](https://agent-ledger-tau.vercel.app) &middot; [SDK Docs](#sdk) &middot; [Self-Host](#self-host) &middot; [Contributing](#contributing)
+[Live Demo](https://agentledger.pages.dev) · [SDK Docs](#sdk) · [Self-Host](#self-host) · [API Docs](#api) · [Contributing](#contributing)
 
 </div>
 
@@ -32,28 +32,49 @@ Every LLM call. Every tool use. Every token spent. Recorded, searchable, and rep
 
 ## What is AgentLedger?
 
-AgentLedger is an open-source observability platform that records everything your AI agents do — LLM calls, tool invocations, costs, errors — and lets you replay, analyze, and audit any session after the fact.
+AgentLedger is an open-source observability and compliance platform for AI agents. Every LLM call, tool invocation, cost, and decision is recorded in a cryptographically chained audit trail — searchable, replayable, and auditor-ready.
 
-## The Problem
+## Features
 
-You deploy an AI agent. It runs 10,000 sessions a day. Then something goes wrong.
+| Feature | Description |
+|---------|-------------|
+| **SHA-256 Hash Chain** | Every event is chained: `hash = SHA256(data + prevHash)`. Tamper with one record and the chain breaks. Verified via `GET /events/verify-chain`. |
+| **Session Replay** | Step through any agent session event-by-event with full payload inspection and hash chain visualization. |
+| **Human-in-Loop Approvals** | Pause high-risk agent actions for human review. Approve or reject with audit trail. |
+| **Compliance Reports** | One-click reports for **EU AI Act** (Articles 9, 13, 14, 17), **SOC 2 Type II**, and **ISO 42001**. |
+| **Cost Analytics** | Per-agent, per-session, per-model token and dollar tracking with charts. |
+| **Anomaly Detection** | Automatic alerts on latency spikes, error bursts, and agent loops. |
+| **Real-Time Streaming** | WebSocket gateway pushes events to the dashboard in real time. |
+| **RBAC** | Role-based access control (Owner, Admin, Member) on destructive operations. |
+| **CSRF Protection** | Double-submit cookie pattern on all state-changing endpoints. |
+| **API Key Auth** | SHA-256 hashed API keys with per-org tier-based rate limiting (Redis). |
 
-- **What happened?** You have logs, but they're scattered across stdout, CloudWatch, and Datadog.
-- **How much did it cost?** You check the OpenAI dashboard. It shows a total. Not per-session. Not per-agent.
-- **Was it the prompt? The tool? The model?** You add more logging. Deploy. Wait. Hope it happens again.
-- **The compliance team asks for an audit trail.** You open a spreadsheet.
+---
 
-AI agents are the first software that makes decisions on your behalf, but they ship with less observability than a 2005 Rails app.
+## Architecture
 
-## The Solution
-
-AgentLedger sits between your agent and the outside world. One SDK call wraps your agent. From that point, every LLM call, tool use, and state change is captured with:
-
-- **Session replay** — step through any session like a debugger
-- **Cost analytics** — per-agent, per-session, per-model token and dollar tracking
-- **Anomaly detection** — automatic alerts on cost spikes, error bursts, and drift
-- **Compliance reports** — EU AI Act, SOC 2, ISO 42001 audit-ready exports
-- **SHA-256 hash chains** — tamper-proof event history
+```
+┌─────────────┐     ┌──────────────────────────────────────────┐
+│  Your Agent  │     │              AgentLedger                 │
+│  (any LLM)  │────>│                                          │
+│             │ SDK │  ┌─────────┐  ┌──────────┐  ┌─────────┐ │
+│  OpenAI     │  or │  │ NestJS  │  │PostgreSQL│  │  Redis  │ │
+│  Anthropic  │ API │  │  API    │──│ (Neon)   │  │(Upstash)│ │
+│  LangChain  │     │  │         │  │          │  │         │ │
+│  CrewAI     │     │  │ JWT +   │  │ Events   │  │ Rate    │ │
+│  Custom     │     │  │ API Key │  │ Chain    │  │ Limits  │ │
+└─────────────┘     │  │ Auth    │  │ Approvals│  │         │ │
+                    │  └────┬────┘  └──────────┘  └─────────┘ │
+┌─────────────┐     │       │ WebSocket                        │
+│  Dashboard  │<────│       v                                  │
+│  (Next.js)  │     │  ┌─────────┐                             │
+│             │     │  │Socket.IO│ Real-time event streaming   │
+│  Replay     │     │  └─────────┘                             │
+│  Approvals  │     └──────────────────────────────────────────┘
+│  Compliance │
+│  Analytics  │
+└─────────────┘
+```
 
 ---
 
@@ -74,14 +95,12 @@ const al = new AgentLedger({ apiKey: 'al_live_sk_...' })
 
 const agent = await al.createAgent({
   name: 'support-bot',
-  description: 'Customer support agent',
   modelProvider: 'anthropic',
   modelId: 'claude-sonnet-4-6',
 })
 
 const session = await al.createSession({ agentId: agent.id })
 
-// Track any event — LLM calls, tool use, errors, anything
 al.track({
   agentId: agent.id,
   sessionId: session.id,
@@ -96,76 +115,109 @@ al.track({
 await al.flush()
 ```
 
-That's it. Every event is now in your dashboard — searchable, replayable, auditable.
-
----
-
-## Features
-
-### Session Replay
-
-Step through any agent session event-by-event. See the exact inputs, outputs, and timing of every LLM call, tool invocation, and decision point. Debug production issues without adding more logging.
-
-### Cost Analytics
-
-Track token usage and dollar cost per agent, per session, per model. Spot which agents are burning through your budget. Set alerts before you get a surprise invoice.
-
-### Anomaly Detection
-
-Automatic detection of cost spikes, error rate increases, latency degradation, and behavioral drift. Get alerted when an agent starts acting differently — before your users notice.
-
-### Compliance & Audit
-
-Generate audit-ready reports for regulatory frameworks:
-
-- **EU AI Act** — Articles 9, 13, 14, 17 (human oversight, transparency, risk management)
-- **SOC 2 Type II** — CC7.2, CC7.3, CC9.2 (monitoring, detection, incident response)
-- **ISO 42001** — Clauses 6.1, 8.4, 9.1, 10.2 (AI risk, operations, evaluation)
-
-Every event is SHA-256 hashed and chained. Tamper with one record and the chain breaks.
-
-### TypeScript SDK
-
-Lightweight, zero-dependency SDK with batched event sending, automatic retries, and graceful shutdown. Works with any framework — OpenAI, Anthropic, LangChain, CrewAI, or raw HTTP calls.
-
----
-
-## Dashboard
-
-> Screenshots coming soon. Try the [live demo](https://agent-ledger-tau.vercel.app) in the meantime.
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Backend** | NestJS, TypeORM, PostgreSQL, Redis (BullMQ) |
-| **Frontend** | Next.js 15, Tailwind CSS, Recharts |
-| **SDK** | TypeScript, zero dependencies |
-| **Auth** | JWT (access + refresh) + API key (SHA-256 hashed) |
-| **Infra** | Docker, Neon (Postgres), Upstash (Redis), Koyeb, Cloudflare Pages |
-
 ---
 
 ## Self-Host
+
+### With Docker Compose (recommended)
 
 ```bash
 git clone https://github.com/2434addy/AgentLedger.git
 cd AgentLedger
 
-# Configure
-cp backend/.env.example backend/.env
-# Set DATABASE_URL, REDIS_URL, JWT_SECRET in backend/.env
-
-# Run
+# Start PostgreSQL + Redis + Backend
 docker-compose up -d
 
 # Backend  → http://localhost:3001
+# Swagger  → http://localhost:3001/api/docs (dev only)
+
+# Start Frontend (separate terminal)
+cd frontend && npm install && npm run dev
 # Frontend → http://localhost:3000
 ```
 
-Runs on any machine with Docker. The free tier of Neon (Postgres) and Upstash (Redis) works for production if you don't want to self-host the data layer.
+### Manual Setup
+
+```bash
+# Backend
+cd backend
+cp .env.example .env
+# Edit .env with your DATABASE_URL, REDIS_URL, JWT_SECRET
+npm install
+npm run migration:run
+npm run start:dev
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+### Production Deployment
+
+| Component | Recommended | Free Tier |
+|-----------|-------------|-----------|
+| Backend | Koyeb / Render | Yes |
+| Frontend | Cloudflare Pages / Vercel | Yes |
+| Database | Neon PostgreSQL | Yes |
+| Redis | Upstash | Yes |
+
+Set all env vars from `backend/.env.example` in your hosting platform.
+
+---
+
+## API
+
+All endpoints are prefixed with `/api/v1/`. Authentication via JWT Bearer token or `x-api-key` header.
+
+### Auth
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/signup` | Public | Create account |
+| POST | `/auth/login` | Public | Login (sets httpOnly refresh cookie) |
+| POST | `/auth/refresh` | Cookie | Refresh access token |
+| POST | `/auth/logout` | JWT | Logout (clears cookies) |
+| POST | `/auth/forgot-password` | Public | Request password reset |
+| POST | `/auth/reset-password` | Public | Reset password with token |
+
+### Agents
+| Method | Endpoint | Auth | Roles | Description |
+|--------|----------|------|-------|-------------|
+| GET | `/agents` | JWT/Key | All | List agents |
+| POST | `/agents` | JWT/Key | All | Register agent |
+| PATCH | `/agents/:id` | JWT/Key | Owner, Admin | Update agent |
+| DELETE | `/agents/:id` | JWT/Key | Owner, Admin | Delete agent |
+
+### Events
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/events` | JWT/Key | List events (cursor pagination) |
+| POST | `/events` | JWT/Key | Create events (batch up to 500) |
+| GET | `/events/verify` | JWT/Key | Verify all event hashes |
+| GET | `/events/verify-chain` | JWT/Key | Verify hash chain integrity |
+| GET | `/events/:id/verify` | JWT/Key | Verify single event hash |
+
+### Approvals
+| Method | Endpoint | Auth | Roles | Description |
+|--------|----------|------|-------|-------------|
+| POST | `/approvals` | JWT/Key | All | Request approval |
+| GET | `/approvals/pending` | JWT/Key | All | List pending approvals |
+| PATCH | `/approvals/:id/approve` | JWT | Owner, Admin | Approve |
+| PATCH | `/approvals/:id/reject` | JWT | Owner, Admin | Reject |
+
+### Compliance
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/compliance/reports/generate` | JWT/Key | Generate framework report (eu-ai-act, soc2, iso42001) |
+| GET | `/compliance/report` | JWT/Key | Basic compliance summary |
+| GET | `/compliance/checks` | JWT/Key | Compliance check status |
+
+### Analytics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/analytics/cost` | Cost breakdown by agent |
+| GET | `/analytics/usage` | Event usage by category |
+| GET | `/analytics/models` | Model usage statistics |
 
 ---
 
@@ -176,25 +228,44 @@ npm install @2434addy/agentledger-sdk
 ```
 
 | Method | Description |
-|---|---|
-| `new AgentLedger({ apiKey, baseUrl? })` | Initialize the client |
-| `al.createAgent({ name, modelProvider, modelId })` | Register an agent |
-| `al.createSession({ agentId })` | Start a tracking session |
-| `al.track({ agentId, sessionId, category, level, message })` | Queue an event |
-| `al.flush()` | Send all queued events |
-| `al.shutdown()` | Flush + stop auto-flush timer |
+|--------|-------------|
+| `new AgentLedger({ apiKey, baseUrl? })` | Initialize client |
+| `al.createAgent({ name, modelProvider, modelId })` | Register agent |
+| `al.createSession({ agentId })` | Start session |
+| `al.track({ agentId, sessionId, category, level, message })` | Queue event |
+| `al.flush()` | Send queued events |
+| `al.shutdown()` | Flush + stop timer |
 
-**Event categories:** `agent_lifecycle` `llm_call` `tool_invocation` `user_action` `system` `security` `guardrail`
+**Categories:** `agent_lifecycle` `llm_call` `tool_invocation` `user_action` `system` `security` `guardrail`
 
-**Event levels:** `debug` `info` `warn` `error` `fatal`
-
-Full SDK source is in [`sdk/`](./sdk).
+**Levels:** `debug` `info` `warn` `error` `fatal`
 
 ---
 
-## Live Demo
+## Security
 
-**[agent-ledger-tau.vercel.app](https://agent-ledger-tau.vercel.app)**
+- Passwords: bcrypt with cost factor 12
+- JWT: HS256, 15-minute access tokens, 7-day refresh tokens (httpOnly cookies)
+- API keys: SHA-256 hashed, never stored raw
+- Event integrity: SHA-256 hash chain with PostgreSQL advisory locks
+- CSRF: Double-submit cookie pattern on all state-changing endpoints
+- RBAC: Role-based access control (Owner/Admin/Member) on destructive operations
+- Rate limiting: Per-org tier-based via Redis (100/min free, 1000/min pro, 5000/min enterprise)
+- Input validation: class-validator on all DTOs, JSONB payload size limits
+- CORS: Single-origin, credentials mode
+- Security headers: Helmet with CSP in production
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Backend** | NestJS 11, TypeORM, PostgreSQL, Redis, Socket.IO |
+| **Frontend** | Next.js 16, React 19, Tailwind CSS 4, Framer Motion, Recharts |
+| **SDK** | TypeScript, zero dependencies |
+| **Auth** | JWT + httpOnly cookies + API keys (SHA-256) + CSRF |
+| **Infra** | Docker, Neon (Postgres), Upstash (Redis), Koyeb/Render, Cloudflare Pages |
 
 ---
 
@@ -205,15 +276,9 @@ PRs welcome. Please open an issue first for large changes.
 ```bash
 git clone https://github.com/2434addy/AgentLedger.git
 cd AgentLedger
-
-# Backend
+docker-compose up -d  # Start Postgres + Redis
 cd backend && npm install && npm run start:dev
-
-# Frontend (separate terminal)
-cd frontend && npm install && npm run dev
-
-# SDK
-cd sdk && npm install && npm run dev
+cd frontend && npm install && npm run dev  # separate terminal
 ```
 
 ---
@@ -228,6 +293,6 @@ MIT
 
 **Your agents are making decisions. You should be able to see every one.**
 
-[Get Started](https://agent-ledger-tau.vercel.app) &middot; [Report Bug](https://github.com/2434addy/AgentLedger/issues) &middot; [Request Feature](https://github.com/2434addy/AgentLedger/issues)
+[Get Started](https://agentledger.pages.dev) · [Report Bug](https://github.com/2434addy/AgentLedger/issues) · [Request Feature](https://github.com/2434addy/AgentLedger/issues)
 
 </div>
