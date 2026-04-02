@@ -1,0 +1,21 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { EventsController } from './events.controller';
+import { EventsService } from './events.service';
+import { Event } from './entities/event.entity';
+import { Session } from '../sessions/entities/session.entity';
+import { Agent } from '../agents/entities/agent.entity';
+import { ApiKey } from '../api-keys/entities/api-key.entity';
+import { AuthModule } from '../auth/auth.module';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiKeyGuard } from '../common/guards/api-key.guard';
+import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
+import { GatewaysModule } from '../gateways/gateways.module';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Event, Session, Agent, ApiKey]), AuthModule, GatewaysModule],
+  controllers: [EventsController],
+  providers: [EventsService, JwtAuthGuard, ApiKeyGuard, CombinedAuthGuard],
+  exports: [EventsService],
+})
+export class EventsModule {}

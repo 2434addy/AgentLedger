@@ -1,0 +1,48 @@
+version: v1
+name: agentledger-api
+services:
+  - name: api
+    type: web
+    github:
+      repository: 2434addy/AgentLedger
+      branch: main
+    build:
+      docker:
+        dockerfile: backend/Dockerfile
+    ports:
+      - port: 3001
+        protocol: http
+    health_checks:
+      - path: /health
+        port: 3001
+        interval: 30
+        timeout: 5
+    instance_types:
+      - type: free
+    regions:
+      - fra
+    env:
+      - key: PORT
+        value: "3001"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        secret: database-url
+      - key: DATABASE_CA_CERT
+        secret: database-ca-cert
+      - key: REDIS_URL
+        secret: redis-url
+      - key: JWT_SECRET
+        secret: jwt-secret
+      - key: JWT_EXPIRES_IN
+        value: "15m"
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: "7d"
+      - key: CORS_ORIGIN
+        value: "https://agentledger.pages.dev"
+      - key: ALLOWED_HOST
+        value: "agentledger-api.koyeb.app"
+      - key: FRONTEND_URL
+        value: "https://agentledger.pages.dev"
+      - key: API_KEY_PREFIX
+        value: "al_live_sk_"

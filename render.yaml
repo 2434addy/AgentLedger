@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: agentledger-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npm run build && npx typeorm-ts-node-commonjs migration:run -d src/data-source.ts
+    startCommand: node dist/main
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_CA_CERT
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN
+        sync: false
+      - key: ALLOWED_HOST
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: API_KEY_PREFIX
+        value: al_live_sk_

@@ -1,0 +1,48 @@
+{
+  "name": "@2434addy/agentledger-sdk",
+  "version": "0.2.1",
+  "description": "TypeScript SDK for AgentLedger — track, audit, and monitor your AI agents.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "ai-agents",
+    "audit-trail",
+    "compliance",
+    "observability",
+    "monitoring",
+    "langchain",
+    "openai",
+    "crewai"
+  ],
+  "author": "AgentLedger",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/2434addy/AgentLedger.git",
+    "directory": "sdk"
+  },
+  "dependencies": {}
+}

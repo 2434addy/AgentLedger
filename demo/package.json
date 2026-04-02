@@ -1,0 +1,13 @@
+{
+  "name": "agentledger-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo AI agent using AgentLedger SDK + Claude API",
+  "scripts": {
+    "start": "node agent.js"
+  },
+  "dependencies": {
+    "@2434addy/agentledger-sdk": "file:../sdk",
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}
