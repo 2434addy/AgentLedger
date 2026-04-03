@@ -24,7 +24,9 @@ import {
 } from '@/lib/api';
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { formatDate } from '@/lib/formatDate';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -584,6 +586,7 @@ function CheckCard({ check, index }: { check: ComplianceCheck; index: number }) 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CompliancePage() {
+  const { org } = useAuth();
   const [report, setReport] = useState<ComplianceReport | null>(null);
   const [checks, setChecks] = useState<ComplianceCheck[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -618,7 +621,6 @@ export default function CompliancePage() {
       )
     : 0;
 
-  const org = { name: 'My Organisation' };
 
   function exportReport() {
     if (!report) return;
@@ -780,7 +782,13 @@ export default function CompliancePage() {
   }
 
   if (error) return <ErrorState message={error} onRetry={loadReport} />;
-  if (!report) return null;
+  if (!report) return (
+    <EmptyState
+      icon={Shield}
+      title="No compliance data yet"
+      description="Run your first compliance audit to see results here. Register an agent and send events to get started."
+    />
+  );
 
   const passed = checks.filter((c) => c.status === 'pass').length;
   const warned = checks.filter((c) => c.status === 'warn').length;
