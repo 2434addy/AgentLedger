@@ -595,7 +595,7 @@ export default function LandingPage() {
           >
             <p className="text-white/40 text-sm">
               Don&apos;t see your framework? AgentLedger works with any framework via REST API.{' '}
-              <a href="#" className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors">
+              <a href="https://github.com/2434addy/AgentLedger#readme" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors">
                 View full SDK docs <ExternalLink className="w-3 h-3" />
               </a>
             </p>
