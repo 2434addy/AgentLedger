@@ -13,7 +13,9 @@ import { Badge, categoryVariant, levelVariant } from '@/components/ui/Badge';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function safeArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? value : [];
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object' && Array.isArray((value as { data?: unknown }).data)) return (value as { data: T[] }).data;
+  return [];
 }
 
 function settled<T>(result: PromiseSettledResult<T>): T | null {

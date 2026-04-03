@@ -21,7 +21,8 @@ export default function SessionsPage() {
     setError('');
     try {
       const res = await sessionsApi.list();
-      setSessions(Array.isArray(res.data) ? res.data : []);
+      const body = res.data as unknown;
+      setSessions(Array.isArray(body) ? body : Array.isArray((body as { data?: unknown }).data) ? (body as { data: Session[] }).data : []);
     } catch {
       setError('Failed to load sessions.');
     } finally {

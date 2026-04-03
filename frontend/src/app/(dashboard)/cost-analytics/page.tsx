@@ -64,7 +64,8 @@ export default function CostAnalyticsPage() {
       }));
 
       // Build byDate from events (backend doesn't provide time-series)
-      const eventsList: Event[] = Array.isArray(eventsRes?.data) ? eventsRes.data : [];
+      const eventsBody = eventsRes?.data as unknown;
+      const eventsList: Event[] = Array.isArray(eventsBody) ? eventsBody : Array.isArray((eventsBody as { data?: unknown })?.data) ? (eventsBody as { data: Event[] }).data : [];
       const dateMap: Record<string, number> = {};
       eventsList.forEach((e) => {
         const date = new Date(e.timestamp).toISOString().split('T')[0];

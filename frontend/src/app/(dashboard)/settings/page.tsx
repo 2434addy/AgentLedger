@@ -170,7 +170,8 @@ export default function SettingsPage() {
     setKeysError('');
     try {
       const res = await apiKeysApi.list();
-      setApiKeys(Array.isArray(res.data) ? res.data : []);
+      const body = res.data as unknown;
+      setApiKeys(Array.isArray(body) ? body : Array.isArray((body as { data?: unknown }).data) ? (body as { data: typeof apiKeys }).data : []);
     } catch {
       setKeysError('Failed to load API keys.');
     } finally {
