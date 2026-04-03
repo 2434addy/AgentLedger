@@ -1,0 +1,151 @@
+# EU AI Act Article 12 — Record-Keeping Checklist
+# This file is data-driven: the engine loads it at runtime and runs each check
+# against normalized traces. Do NOT hard-code check logic in the engine.
+
+name: "EU AI Act Article 12 — Record-Keeping"
+version: "2024"
+regulation: "EU AI Act"
+article: "Article 12"
+description: "Logging requirements for high-risk AI systems"
+disclaimer: >
+  This scan evaluates trace data quality against Article 12 logging requirements.
+  It is not a legal compliance determination. Article 12 applies to high-risk AI
+  systems per Annex III.
+
+# ─── Trace Quality Checks ────────────────────────────────────────────
+# These checks CAN be verified from trace data.
+
+checks:
+  - id: timestamp_present
+    field: timestamp
+    rule: required
+    severity: critical
+    article: "12(1)"
+    category: trace_quality
+    description: >
+      Every event must have a timestamp. Article 12(1) requires automatic
+      recording of events throughout the system lifecycle, which is only
+      meaningful if each event is temporally anchored.
+
+  - id: agent_identity
+    field: agentId
+    rule: required
+    severity: critical
+    article: "12(2)"
+    category: trace_quality
+    description: >
+      Events must be attributed to a specific agent identity. Without this,
+      it is impossible to determine which component or model produced a
+      given decision or output.
+
+  - id: agent_type
+    field: agentType
+    rule: required
+    severity: high
+    article: "12(2)"
+    category: trace_quality
+    description: >
+      Agent type or role must be recorded (e.g. LLM, tool, chain, retriever).
+      This supports traceability of which system component was responsible
+      for each logged event.
+
+  - id: input_output_pairs
+    fields:
+      - input
+      - output
+    rule: both_present
+    severity: critical
+    article: "12(2)"
+    category: trace_quality
+    description: >
+      Input and output data must be preserved for decision reconstruction.
+      Article 12(2) requires that logs enable the tracing of AI system
+      operation, which demands paired input/output records.
+
+  - id: error_tracking
+    field: error
+    rule: required
+    severity: high
+    article: "12(1)(a)"
+    category: trace_quality
+    description: >
+      Error states must be recorded for risk identification. This check
+      verifies that the error field EXISTS on each trace (is not undefined),
+      even if it is null. A null error field means "no error occurred," which
+      is valid. The check flags only if the field is entirely absent from the
+      trace object.
+
+  - id: tool_call_logging
+    field: toolCalls
+    rule: non_empty_array
+    severity: medium
+    article: "12(2)"
+    category: trace_quality
+    description: >
+      Tool and function calls must be logged for agentic systems. This check
+      reports the percentage of traces that contain at least one tool call.
+      An empty toolCalls array simply means no tools were invoked for that
+      trace, which is not necessarily a failure — it is informational.
+
+  - id: trace_linkage
+    field: traceId
+    rule: required
+    severity: high
+    article: "12(1)"
+    category: trace_quality
+    description: >
+      Events must be linkable to their parent trace for reconstruction.
+      A traceId allows grouping related events into a single logical
+      operation, which is essential for audit and incident investigation.
+
+# ─── Readiness Gaps ──────────────────────────────────────────────────
+# These checks CANNOT be verified from trace data alone. They surface
+# organizational and infrastructure requirements the user should address.
+
+readiness_gaps:
+  - id: retention_compliance
+    article: "19"
+    severity: high
+    description: >
+      Logs must be retained for at least 6 months.
+    recommendation: >
+      Verify your log storage retention policy meets the 6-month minimum
+      under Article 19. Consider WORM storage or append-only databases.
+
+  - id: continuous_logging
+    article: "12(1)"
+    severity: critical
+    description: >
+      Logging must be automatic and continuous throughout the system lifecycle.
+    recommendation: >
+      Verify that logging is enabled in all environments (staging, production)
+      and cannot be disabled without audit trail.
+
+  - id: immutability_evidence
+    article: "15/Best Practice"
+    severity: high
+    description: >
+      Tamper-evident storage is strongly recommended though not explicitly
+      mandated.
+    recommendation: >
+      Consider cryptographic hash chaining (SHA-256), WORM storage (S3 Object
+      Lock), or append-only databases. AgentLedger SDK provides built-in hash
+      chain verification.
+
+  - id: human_override_logging
+    article: "14(4)"
+    severity: high
+    description: >
+      Human oversight interventions must be recorded.
+    recommendation: >
+      Ensure that when a human overrides, corrects, or intervenes in an AI
+      decision, the override is logged with reviewer identity and reasoning.
+
+  - id: data_governance
+    article: "12(2)/10"
+    severity: medium
+    description: >
+      Data used for system operation must be governed and documented.
+    recommendation: >
+      Document data sources, processing pipelines, and access controls for
+      all data flowing through the AI system.

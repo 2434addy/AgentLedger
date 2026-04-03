@@ -1,0 +1,51 @@
+{
+  "name": "agentledger-scan",
+  "version": "0.1.0",
+  "description": "EU AI Act Article 12 compliance readiness assessment for AI agent traces",
+  "bin": {
+    "agentledger-scan": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "checklists"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "eu-ai-act",
+    "compliance",
+    "audit",
+    "ai-agent",
+    "langsmith",
+    "langfuse",
+    "article-12"
+  ],
+  "author": "AgentLedger",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/2434addy/AgentLedger",
+    "directory": "scanner"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "js-yaml": "^4.1.0",
+    "pdfkit": "^0.15.0",
+    "picocolors": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "@types/pdfkit": "^0.13.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

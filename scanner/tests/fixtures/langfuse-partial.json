@@ -1,0 +1,45 @@
+[
+  {
+    "id": "trace-lf-partial-001",
+    "name": "PartialAgent",
+    "input": { "query": "What is the weather?" },
+    "output": null,
+    "metadata": {},
+    "timestamp": "2025-06-16T09:00:00.000Z",
+    "userId": "user-100",
+    "sessionId": null,
+    "tags": [],
+    "observations": [
+      {
+        "id": "obs-partial-001",
+        "traceId": "trace-lf-partial-001",
+        "type": "GENERATION",
+        "name": "gpt-3.5-turbo",
+        "startTime": "2025-06-16T09:00:01.000Z",
+        "endTime": "2025-06-16T09:00:02.500Z",
+        "input": null,
+        "output": null,
+        "metadata": null,
+        "parentObservationId": null,
+        "statusMessage": null,
+        "level": "DEFAULT",
+        "usageDetails": {},
+        "costDetails": {},
+        "modelParameters": null,
+        "providedModelName": "gpt-3.5-turbo",
+        "tags": []
+      }
+    ]
+  },
+  {
+    "id": "trace-lf-no-obs-002",
+    "name": "TraceWithNoObservations",
+    "input": { "prompt": "Hello world" },
+    "output": { "response": "Hi there!" },
+    "metadata": { "source": "api" },
+    "timestamp": "2025-06-16T09:05:00.000Z",
+    "userId": "user-200",
+    "sessionId": "session-no-obs",
+    "tags": ["no-observations"]
+  }
+]

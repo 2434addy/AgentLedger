@@ -1,0 +1,32 @@
+[
+  {
+    "id": "run-partial-001",
+    "name": "SummarizationChain",
+    "run_type": "chain",
+    "start_time": "2025-06-16T08:30:00.000Z",
+    "end_time": "2025-06-16T08:30:12.000Z",
+    "inputs": { "text": "Long document content..." },
+    "outputs": null,
+    "error": null,
+    "trace_id": "trace-partial-001",
+    "dotted_order": "20250616T083000000Z-run-partial-001",
+    "parent_run_id": null,
+    "extra": { "runtime": { "library": "langchain" } },
+    "tags": []
+  },
+  {
+    "id": "run-partial-002",
+    "name": "gpt-4o",
+    "run_type": "llm",
+    "start_time": "2025-06-16T08:30:01.000Z",
+    "end_time": "2025-06-16T08:30:10.000Z",
+    "inputs": "What is the summary of this document?",
+    "outputs": { "text": "The document describes..." },
+    "error": null,
+    "trace_id": "trace-partial-001",
+    "dotted_order": "20250616T083000000Z-run-partial-001.20250616T083001000Z-run-partial-002",
+    "parent_run_id": "run-partial-001",
+    "extra": {},
+    "tags": ["summarization"]
+  }
+]

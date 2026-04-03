@@ -1,0 +1,72 @@
+[
+  {
+    "id": "trace-lf-001",
+    "name": "CustomerSupportAgent",
+    "input": { "query": "I need help with my subscription" },
+    "output": { "response": "I've updated your subscription plan." },
+    "metadata": { "environment": "production", "version": "2.1.0" },
+    "timestamp": "2025-06-15T14:00:00.000Z",
+    "userId": "user-882",
+    "sessionId": "session-xyz-123",
+    "tags": ["support", "billing"],
+    "observations": [
+      {
+        "id": "obs-gen-001",
+        "traceId": "trace-lf-001",
+        "type": "GENERATION",
+        "name": "gpt-4o",
+        "startTime": "2025-06-15T14:00:01.000Z",
+        "endTime": "2025-06-15T14:00:04.500Z",
+        "input": { "messages": [{ "role": "user", "content": "Help with subscription" }] },
+        "output": { "completion": "Sure, let me look into your subscription." },
+        "metadata": { "stream": false },
+        "parentObservationId": null,
+        "statusMessage": null,
+        "level": "DEFAULT",
+        "usageDetails": { "input": 150, "output": 42, "total": 192 },
+        "costDetails": { "input": 0.0015, "output": 0.00084, "total": 0.00234 },
+        "modelParameters": { "temperature": 0.7, "max_tokens": 512 },
+        "providedModelName": "gpt-4o",
+        "tags": ["generation"]
+      },
+      {
+        "id": "obs-span-002",
+        "traceId": "trace-lf-001",
+        "type": "SPAN",
+        "name": "RetrieveSubscriptionDetails",
+        "startTime": "2025-06-15T14:00:04.600Z",
+        "endTime": "2025-06-15T14:00:05.200Z",
+        "input": { "userId": "user-882" },
+        "output": { "plan": "pro", "renewalDate": "2025-07-15" },
+        "metadata": { "source": "billing-api" },
+        "parentObservationId": "obs-gen-001",
+        "statusMessage": null,
+        "level": "DEFAULT",
+        "usageDetails": {},
+        "costDetails": {},
+        "modelParameters": null,
+        "providedModelName": null,
+        "tags": []
+      },
+      {
+        "id": "obs-event-003",
+        "traceId": "trace-lf-001",
+        "type": "EVENT",
+        "name": "SubscriptionUpdated",
+        "startTime": "2025-06-15T14:00:05.300Z",
+        "endTime": null,
+        "input": { "action": "upgrade", "newPlan": "enterprise" },
+        "output": { "success": true },
+        "metadata": {},
+        "parentObservationId": "obs-span-002",
+        "statusMessage": null,
+        "level": "DEFAULT",
+        "usageDetails": {},
+        "costDetails": {},
+        "modelParameters": null,
+        "providedModelName": null,
+        "tags": ["event"]
+      }
+    ]
+  }
+]
