@@ -117,7 +117,9 @@ export default function AgentsPage() {
     setError('');
     try {
       const res = await agentsApi.list();
-      setAgents(Array.isArray(res.data) ? res.data : []);
+      const body = res.data as unknown;
+      const list = Array.isArray(body) ? body : Array.isArray((body as { data?: unknown }).data) ? (body as { data: Agent[] }).data : [];
+      setAgents(list);
     } catch {
       setError('Failed to load agents.');
     } finally {
