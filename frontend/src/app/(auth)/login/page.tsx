@@ -98,16 +98,18 @@ export default function LoginPage() {
 
             {error && (
               <div className="mb-4 flex items-center gap-2 p-3 rounded-xl text-red-400 text-sm"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+                role="alert">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
               <div>
-                <label className="block text-white/70 text-sm mb-1.5">Email</label>
+                <label htmlFor="login-email" className="block text-white/70 text-sm mb-1.5">Email</label>
                 <input
+                  id="login-email"
                   suppressHydrationWarning
                   type="email"
                   value={email}
@@ -119,7 +121,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-white/70 text-sm">Password</label>
+                  <label htmlFor="login-password" className="text-white/70 text-sm">Password</label>
                   <Link
                     href="/forgot-password"
                     className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
@@ -129,6 +131,7 @@ export default function LoginPage() {
                 </div>
                 <div className="relative">
                   <input
+                    id="login-password"
                     suppressHydrationWarning
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -141,8 +144,9 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
               </div>

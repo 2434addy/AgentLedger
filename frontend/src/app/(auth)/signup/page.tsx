@@ -119,16 +119,18 @@ export default function SignupPage() {
 
             {error && (
               <div className="mb-4 flex items-center gap-2 p-3 rounded-xl text-red-400 text-sm"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+                role="alert">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
               <div>
-                <label className="block text-white/70 text-sm mb-1.5">Display Name</label>
+                <label htmlFor="signup-name" className="block text-white/70 text-sm mb-1.5">Display Name</label>
                 <input
+                  id="signup-name"
                   suppressHydrationWarning
                   type="text"
                   value={displayName}
@@ -142,8 +144,9 @@ export default function SignupPage() {
                 </p>
               </div>
               <div>
-                <label className="block text-white/70 text-sm mb-1.5">Email</label>
+                <label htmlFor="signup-email" className="block text-white/70 text-sm mb-1.5">Email</label>
                 <input
+                  id="signup-email"
                   suppressHydrationWarning
                   type="email"
                   value={email}
@@ -154,9 +157,10 @@ export default function SignupPage() {
                 />
               </div>
               <div>
-                <label className="block text-white/70 text-sm mb-1.5">Password</label>
+                <label htmlFor="signup-password" className="block text-white/70 text-sm mb-1.5">Password</label>
                 <div className="relative">
                   <input
+                    id="signup-password"
                     suppressHydrationWarning
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -169,8 +173,9 @@ export default function SignupPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
               </div>

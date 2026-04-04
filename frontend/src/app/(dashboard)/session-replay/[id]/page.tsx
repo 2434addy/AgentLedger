@@ -562,16 +562,18 @@ export default function SessionReplayPage() {
             disabled={events.length === 0 || replayIndex >= events.length - 1}
             className="p-2 rounded-lg text-white/40 hover:text-white/80 transition-colors disabled:opacity-30"
             title="Next event"
+            aria-label="Next event"
           >
-            <SkipForward className="w-4 h-4" />
+            <SkipForward className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             onClick={resetReplay}
             disabled={events.length === 0}
             className="p-2 rounded-lg text-white/40 hover:text-white/80 transition-colors disabled:opacity-30"
             title="Reset to start"
+            aria-label="Reset to start"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4" aria-hidden="true" />
           </button>
           {/* Progress bar */}
           <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>

@@ -49,8 +49,8 @@ function NewKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
             <Check className="w-5 h-5 text-emerald-400" />
             <h2 className="text-white font-bold text-xl">API Key Created</h2>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors" aria-label="Close dialog">
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -67,8 +67,8 @@ function NewKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
         <div className="flex items-center gap-2 p-3 rounded-xl mb-6"
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <code className="flex-1 text-emerald-400 text-sm font-mono break-all">{rawKey}</code>
-          <button onClick={copy} className="flex-shrink-0 p-2 rounded-lg hover:bg-white/10 transition-colors">
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-white/50" />}
+          <button onClick={copy} className="flex-shrink-0 p-2 rounded-lg hover:bg-white/10 transition-colors" aria-label={copied ? 'Copied' : 'Copy API key'}>
+            {copied ? <Check className="w-4 h-4 text-emerald-400" aria-hidden="true" /> : <Copy className="w-4 h-4 text-white/50" aria-hidden="true" />}
           </button>
         </div>
 
@@ -113,8 +113,8 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-white font-bold text-xl">Generate API Key</h2>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors" aria-label="Close dialog">
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 

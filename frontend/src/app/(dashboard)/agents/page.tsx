@@ -49,8 +49,8 @@ function RegisterAgentModal({ onClose, onCreated }: { onClose: () => void; onCre
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-white font-bold text-xl">Register Agent</h2>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors" aria-label="Close dialog">
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 

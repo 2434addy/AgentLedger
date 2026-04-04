@@ -125,8 +125,8 @@ function ConfirmModal({ modal, onClose, onConfirm }: ConfirmModalProps) {
               {isApprove ? 'Approve Request' : 'Reject Request'}
             </h2>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors" aria-label="Close dialog">
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
