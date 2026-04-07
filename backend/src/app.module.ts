@@ -34,9 +34,8 @@ import { CsrfGuard } from './common/guards/csrf.guard';
           if (caCert) {
             return { rejectUnauthorized: true, ca: caCert };
           }
-          // Neon serverless driver validates via its own TLS stack.
-          // Set DATABASE_CA_CERT for full cert pinning.
-          return { rejectUnauthorized: false };
+          // No CA cert provided — use system CA pool (validates Neon's Let's Encrypt cert)
+          return { rejectUnauthorized: true };
         })(),
         extra: { max: 5, idleTimeoutMillis: 30000 },
         autoLoadEntities: true,

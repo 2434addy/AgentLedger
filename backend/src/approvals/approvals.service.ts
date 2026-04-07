@@ -10,7 +10,7 @@ export class ApprovalsService {
     @InjectRepository(Approval) private readonly approvalRepo: Repository<Approval>,
   ) {}
 
-  async create(orgId: string, dto: CreateApprovalDto): Promise<Approval> {
+  async create(orgId: string, dto: CreateApprovalDto, requestedBy: string): Promise<Approval> {
     const approval = this.approvalRepo.create({
       orgId,
       agentId: dto.agentId,
@@ -18,7 +18,7 @@ export class ApprovalsService {
       type: dto.type,
       status: ApprovalStatus.PENDING,
       payload: dto.payload,
-      requestedBy: dto.requestedBy,
+      requestedBy,
       expiresAt: dto.expiresAt
         ? new Date(dto.expiresAt)
         : new Date(Date.now() + 24 * 60 * 60 * 1000),

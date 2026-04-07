@@ -23,10 +23,8 @@ export const AppDataSource = new DataSource({
     if (caCert) {
       return { rejectUnauthorized: true, ca: caCert };
     }
-    // Neon serverless driver validates via its own TLS stack.
-    // Set DATABASE_CA_CERT for full cert pinning.
-    console.warn('[DB] No DATABASE_CA_CERT set — using Neon default TLS (host validated by Neon proxy)');
-    return { rejectUnauthorized: false };
+    // No CA cert provided — use system CA pool (validates Neon's Let's Encrypt cert)
+    return { rejectUnauthorized: true };
   })(),
   extra: { max: 5, idleTimeoutMillis: 30000 },
   entities: [Organisation, User, RefreshToken, PasswordResetToken, ApiKey, Agent, Session, Event, AuditLog, Approval],

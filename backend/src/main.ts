@@ -79,8 +79,12 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
     transform: true,
   }));
+  const corsOrigin = process.env.CORS_ORIGIN;
+  if (process.env.NODE_ENV === 'production' && !corsOrigin) {
+    throw new Error('CORS_ORIGIN must be set in production');
+  }
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: corsOrigin || 'http://localhost:3000',
     credentials: true,
   });
   app.useGlobalFilters(new GlobalExceptionFilter());

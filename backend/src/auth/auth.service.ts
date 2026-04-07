@@ -121,21 +121,27 @@ export class AuthService {
 
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
     const tokenHash = crypto.createHash('sha256').update(dto.token).digest('hex');
-    const stored = await this.resetTokenRepo.findOne({ where: { tokenHash, used: false } });
 
-    if (!stored || stored.expiresAt < new Date()) {
+    // Atomic claim: mark token as used and return it only if it was unused.
+    // Prevents race condition where two concurrent requests both read used=false.
+    const claimed = await this.resetTokenRepo
+      .createQueryBuilder()
+      .update()
+      .set({ used: true })
+      .where('"tokenHash" = :tokenHash AND "used" = false AND "expiresAt" > NOW()', { tokenHash })
+      .returning('*')
+      .execute();
+
+    if (!claimed.affected || claimed.affected === 0) {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
 
+    const stored = claimed.raw[0];
     const user = await this.userRepo.findOne({ where: { id: stored.userId } });
     if (!user) throw new UnauthorizedException('User not found');
 
     const updatedUser = { ...user, passwordHash: await bcrypt.hash(dto.newPassword, 12) };
     await this.userRepo.save(updatedUser);
-
-    // Mark token as used
-    const usedToken = { ...stored, used: true };
-    await this.resetTokenRepo.save(usedToken);
 
     // Revoke all active refresh tokens for this user
     await this.refreshRepo

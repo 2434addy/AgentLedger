@@ -41,15 +41,11 @@ export class ApprovalsController {
   @ApiResponse({ status: 400, description: 'Validation error.' })
   @ApiResponse({ status: 401, description: 'Unauthenticated.' })
   create(@Req() req: AuthRequest, @Body() dto: CreateApprovalDto) {
-    // Always use authenticated user ID — never trust DTO value
     const authenticatedUserId = req.user.id ?? req.user.userId;
     if (!authenticatedUserId) {
       throw new BadRequestException('Could not determine authenticated user ID');
     }
-    return this.approvalsService.create(req.user.orgId, {
-      ...dto,
-      requestedBy: authenticatedUserId,
-    });
+    return this.approvalsService.create(req.user.orgId, dto, authenticatedUserId);
   }
 
   @Get()

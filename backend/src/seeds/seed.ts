@@ -16,7 +16,9 @@ import { computeEventHash } from '../events/event-hash.util';
 const dataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: true }
+    : false,
   extra: { max: 5, idleTimeoutMillis: 30000 },
   entities: [Organisation, User, RefreshToken, ApiKey, Agent, Session, Event, AuditLog],
   synchronize: false,
