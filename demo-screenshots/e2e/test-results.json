@@ -3,13 +3,13 @@
     "healthScore": 97,
     "modulesRun": 16,
     "totalModules": 16,
-    "totalTests": 116,
-    "totalPassed": 112,
+    "totalTests": 119,
+    "totalPassed": 115,
     "totalFailed": 4,
     "totalSkipped": 0,
-    "startTime": "2026-04-09T07:19:00.174Z",
-    "endTime": "2026-04-09T07:20:54.602Z",
-    "durationSeconds": 114
+    "startTime": "2026-04-09T07:53:19.367Z",
+    "endTime": "2026-04-09T07:55:39.766Z",
+    "durationSeconds": 140
   },
   "modules": [
     {
@@ -36,15 +36,15 @@
     {
       "name": "Module 2: Authentication Flow",
       "tests": 14,
-      "passed": 14,
-      "failed": 0,
+      "passed": 13,
+      "failed": 1,
       "details": [
         "PASS: Signup returns 201",
         "PASS: Signup returns access token",
         "PASS: Signup returns user object",
         "PASS: Signup sets CSRF token",
         "PASS: Signup page renders form",
-        "PASS: Duplicate email returns 400/409",
+        "FAIL: Duplicate email returns 400/409 — got 429",
         "PASS: Login returns 200",
         "PASS: Login returns access token",
         "PASS: Login sets CSRF token",
@@ -54,7 +54,7 @@
         "PASS: Forgot password page renders",
         "PASS: Forgot password returns 200"
       ],
-      "status": "PASS"
+      "status": "PARTIAL"
     },
     {
       "name": "Module 3: Dashboard Overview",
@@ -64,12 +64,12 @@
       "details": [
         "PASS: Dashboard page loads",
         "PASS: Dashboard shows content (cards/welcome)",
-        "PASS: Agents page loads (/dashboard/agents)",
-        "PASS: Sessions page loads (/dashboard/sessions)",
-        "PASS: Events page loads (/dashboard/events)",
-        "PASS: Compliance page loads (/dashboard/compliance)",
-        "PASS: Approvals page loads (/dashboard/approvals)",
-        "PASS: Settings page loads (/dashboard/settings)"
+        "PASS: Agents page loads (/agents)",
+        "PASS: Sessions page loads (/sessions)",
+        "PASS: Events page loads (/events)",
+        "PASS: Compliance page loads (/compliance)",
+        "PASS: Approvals page loads (/approvals)",
+        "PASS: Settings page loads (/settings)"
       ],
       "status": "PASS"
     },
@@ -222,31 +222,34 @@
     },
     {
       "name": "Module 14: Mobile Responsive Testing",
-      "tests": 5,
-      "passed": 4,
+      "tests": 8,
+      "passed": 7,
       "failed": 1,
       "details": [
         "PASS: Mobile Dashboard — no horizontal overflow",
         "PASS: Mobile Events — no horizontal overflow",
         "PASS: Mobile Approvals — no horizontal overflow",
-        "PASS: Mobile Agents — no horizontal overflow",
-        "FAIL: Hamburger menu button exists — "
+        "FAIL: Mobile Agents — no horizontal overflow — scrollWidth=771",
+        "PASS: Hamburger menu button exists",
+        "PASS: Hamburger menu opens sidebar",
+        "PASS: Overlay backdrop appears",
+        "PASS: Sidebar closes on outside click"
       ],
       "status": "PARTIAL"
     },
     {
       "name": "Module 15: Performance Metrics",
       "tests": 11,
-      "passed": 9,
-      "failed": 2,
+      "passed": 10,
+      "failed": 1,
       "details": [
         "PASS: GET /events (100+) under 500ms",
-        "FAIL: GET /sessions under 500ms — 521ms",
+        "PASS: GET /sessions under 500ms",
         "PASS: GET /agents under 500ms",
         "PASS: GET /analytics/cost under 500ms",
         "PASS: GET /analytics/usage under 500ms",
         "PASS: GET /compliance/checks under 500ms",
-        "FAIL: GET /approvals under 500ms — 500ms",
+        "FAIL: GET /approvals under 500ms — 564ms",
         "PASS: POST /events batch 50 under 2s",
         "PASS: Hash chain verification under 5s",
         "PASS: Landing Page Load under 3000ms",
@@ -388,67 +391,72 @@
       "filename": "module14-mobile-agents.png",
       "module": "Module 14",
       "description": "module14-mobile-agents"
+    },
+    {
+      "filename": "module14-mobile-menu-open.png",
+      "module": "Module 14",
+      "description": "module14-mobile-menu-open"
     }
   ],
   "bugs": [],
   "performance": [
     {
       "endpoint": "Landing Page Load",
-      "responseTime": 1357,
+      "responseTime": 1643,
       "target": 3000,
       "status": "PASS"
     },
     {
       "endpoint": "POST /auth/signup",
-      "responseTime": 1629,
+      "responseTime": 1911,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "POST /auth/login",
-      "responseTime": 1932,
+      "responseTime": 669,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "Dashboard Page Load",
-      "responseTime": 1942,
+      "responseTime": 1967,
       "target": 3000,
       "status": "PASS"
     },
     {
       "endpoint": "POST /agents (gpt-4o-finance-bot)",
-      "responseTime": 194,
+      "responseTime": 327,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "POST /agents (claude-support-agent)",
-      "responseTime": 209,
+      "responseTime": 265,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "POST /agents (data-pipeline-worker)",
-      "responseTime": 192,
+      "responseTime": 197,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /agents",
-      "responseTime": 67,
+      "responseTime": 68,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /agents/:id",
-      "responseTime": 63,
+      "responseTime": 66,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "POST /api-keys",
-      "responseTime": 196,
+      "responseTime": 197,
       "target": 500,
       "status": "PASS"
     },
@@ -460,199 +468,199 @@
     },
     {
       "endpoint": "POST /sessions",
-      "responseTime": 580,
+      "responseTime": 654,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "POST /events (batch 5)",
-      "responseTime": 1059,
+      "responseTime": 1214,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "POST /events (batch 4)",
-      "responseTime": 1004,
+      "responseTime": 1031,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "POST /approvals (wire transfer)",
-      "responseTime": 628,
+      "responseTime": 581,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "POST /approvals (data delete)",
-      "responseTime": 574,
+      "responseTime": 573,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "POST /events (batch 100 stress)",
-      "responseTime": 1177,
+      "responseTime": 1252,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "GET /events (500 limit)",
-      "responseTime": 520,
+      "responseTime": 514,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "GET /events (filter by agent)",
-      "responseTime": 507,
+      "responseTime": 514,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "GET /events (filter by category)",
-      "responseTime": 454,
+      "responseTime": 449,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /events/:id",
-      "responseTime": 427,
+      "responseTime": 447,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /events/verify-chain",
-      "responseTime": 464,
+      "responseTime": 443,
       "target": 1000,
       "status": "PASS"
     },
     {
       "endpoint": "GET /sessions",
-      "responseTime": 517,
+      "responseTime": 507,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "GET /sessions/:id",
-      "responseTime": 505,
+      "responseTime": 499,
       "target": 500,
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "endpoint": "GET /approvals/pending",
-      "responseTime": 127,
+      "responseTime": 137,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "PATCH /approvals/:id/approve",
-      "responseTime": 320,
+      "responseTime": 326,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "PATCH /approvals/:id/reject",
-      "responseTime": 324,
+      "responseTime": 321,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "POST /compliance/reports/generate (EU AI Act)",
-      "responseTime": 495,
+      "responseTime": 467,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "POST /compliance/reports/generate (SOC 2)",
-      "responseTime": 152,
+      "responseTime": 131,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "POST /compliance/reports/generate (ISO 42001)",
-      "responseTime": 141,
+      "responseTime": 131,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /compliance/checks",
-      "responseTime": 65,
-      "target": 500,
-      "status": "PASS"
-    },
-    {
-      "endpoint": "GET /compliance/report",
       "responseTime": 63,
       "target": 500,
       "status": "PASS"
     },
     {
+      "endpoint": "GET /compliance/report",
+      "responseTime": 65,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
       "endpoint": "GET /analytics/cost",
-      "responseTime": 441,
+      "responseTime": 483,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /analytics/usage",
-      "responseTime": 441,
+      "responseTime": 443,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /analytics/models",
-      "responseTime": 451,
+      "responseTime": 441,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /events (100+)",
-      "responseTime": 7,
+      "responseTime": 5,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /sessions",
-      "responseTime": 521,
+      "responseTime": 499,
       "target": 500,
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "endpoint": "GET /agents",
-      "responseTime": 431,
+      "responseTime": 428,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /analytics/cost",
-      "responseTime": 436,
+      "responseTime": 446,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /analytics/usage",
-      "responseTime": 438,
+      "responseTime": 472,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /compliance/checks",
-      "responseTime": 435,
+      "responseTime": 430,
       "target": 500,
       "status": "PASS"
     },
     {
       "endpoint": "GET /approvals",
-      "responseTime": 500,
+      "responseTime": 564,
       "target": 500,
       "status": "FAIL"
     },
     {
       "endpoint": "POST /events (batch 50)",
-      "responseTime": 1073,
+      "responseTime": 992,
       "target": 2000,
       "status": "PASS"
     },
     {
       "endpoint": "GET /events/verify-chain (all events)",
-      "responseTime": 682,
+      "responseTime": 539,
       "target": 5000,
       "status": "PASS"
     }
@@ -692,7 +700,7 @@
     }
   ],
   "state": {
-    "testEmail": "e2e-test-1775719140174@agentledger.dev",
+    "testEmail": "e2e-test-1775721199367@agentledger.dev",
     "agentCount": 3,
     "sessionCount": 2,
     "approvalCount": 2

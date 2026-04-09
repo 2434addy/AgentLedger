@@ -113,6 +113,37 @@ function apiKeyHeaders() {
   return { 'x-api-key': state.apiKey };
 }
 
+/** Log in via the browser UI so httpOnly cookies are set in the browser context */
+async function browserLogin(page) {
+  await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle', timeout: 10000 });
+  await page.waitForTimeout(1000);
+
+  // Fill email
+  const emailInput = await page.$('input[type="email"]');
+  if (emailInput) {
+    await emailInput.click();
+    await emailInput.fill(state.testEmail);
+  }
+
+  // Fill password
+  const passwordInput = await page.$('input[type="password"]');
+  if (passwordInput) {
+    await passwordInput.click();
+    await passwordInput.fill(state.testPassword);
+  }
+
+  // Submit form
+  const submitBtn = await page.$('button[type="submit"]');
+  if (submitBtn) {
+    await submitBtn.click();
+  }
+
+  // Wait for redirect to /dashboard
+  await page.waitForURL('**/dashboard', { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(1000);
+  state.browserLoggedIn = true;
+}
+
 // ======================== MODULE 1: Landing Page ========================
 async function module1(page) {
   const mod = { name: 'Module 1: Landing Page', tests: 0, passed: 0, failed: 0, details: [] };
@@ -306,30 +337,8 @@ async function module3(page) {
     console.log(`  ${pass ? 'PASS' : 'FAIL'}: ${name}${detail ? ' — ' + detail : ''}`);
   }
 
-  // We need to be authenticated in the browser. Let's use localStorage-based auth or navigate directly
-  // First set the token in localStorage via page context
-  await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
-  await page.waitForTimeout(500);
-
-  // Try to log in via the browser UI
-  const emailInput = await page.$('input[type="email"], input[name="email"]');
-  const passwordInput = await page.$('input[type="password"], input[name="password"]');
-
-  if (emailInput && passwordInput) {
-    await emailInput.fill(state.testEmail);
-    await passwordInput.fill(state.testPassword);
-    const submitBtn = await page.$('button[type="submit"], button:has-text("Log In"), button:has-text("Sign In"), button:has-text("Login")');
-    if (submitBtn) {
-      await submitBtn.click();
-      await page.waitForTimeout(3000);
-    }
-  }
-
-  // Try to set auth token directly
-  await page.evaluate((token) => {
-    localStorage.setItem('accessToken', token);
-    localStorage.setItem('token', token);
-  }, state.accessToken);
+  // Log in via browser UI to set httpOnly cookies
+  await browserLogin(page);
 
   const navStart = performance.now();
   await page.goto(`${FRONTEND_URL}/dashboard`, { waitUntil: 'networkidle', timeout: 15000 }).catch(() => {});
@@ -346,14 +355,14 @@ async function module3(page) {
   const hasCards = pageText.includes('Agent') || pageText.includes('Event') || pageText.includes('Session') || pageText.includes('Cost') || pageText.includes('Dashboard') || pageText.includes('Welcome');
   test('Dashboard shows content (cards/welcome)', hasCards, pageText.slice(0, 200));
 
-  // Check sidebar navigation links
+  // Check sidebar navigation links (routes are at root level, not /dashboard/*)
   const sidebarLinks = [
-    { name: 'Agents', path: '/dashboard/agents' },
-    { name: 'Sessions', path: '/dashboard/sessions' },
-    { name: 'Events', path: '/dashboard/events' },
-    { name: 'Compliance', path: '/dashboard/compliance' },
-    { name: 'Approvals', path: '/dashboard/approvals' },
-    { name: 'Settings', path: '/dashboard/settings' },
+    { name: 'Agents', path: '/agents' },
+    { name: 'Sessions', path: '/sessions' },
+    { name: 'Events', path: '/events' },
+    { name: 'Compliance', path: '/compliance' },
+    { name: 'Approvals', path: '/approvals' },
+    { name: 'Settings', path: '/settings' },
   ];
 
   for (const link of sidebarLinks) {
@@ -413,7 +422,7 @@ async function module4(page) {
   }
 
   // Navigate to agents page in browser
-  await page.goto(`${FRONTEND_URL}/dashboard/agents`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/agents`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(2000);
   await screenshot(page, 'module4-agents-list', 'Module 4');
 
@@ -474,7 +483,7 @@ async function module5(page) {
   }
 
   // Navigate to API keys page in browser
-  await page.goto(`${FRONTEND_URL}/dashboard/settings`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/settings`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(1500);
   await screenshot(page, 'module5-api-keys-page', 'Module 5');
 
@@ -655,7 +664,7 @@ async function module7(page) {
   test('Hash chain is VALID', chainValid, `data=${JSON.stringify(chainRes.data).slice(0, 200)}`);
 
   // Browser: Navigate to events page
-  await page.goto(`${FRONTEND_URL}/dashboard/events`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/events`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(2000);
   await screenshot(page, 'module7-events-list', 'Module 7');
 
@@ -699,12 +708,12 @@ async function module8(page) {
   }
 
   // Browser: Navigate to sessions page
-  await page.goto(`${FRONTEND_URL}/dashboard/sessions`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/sessions`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(2000);
   await screenshot(page, 'module8-sessions-list', 'Module 8');
 
   // Try session replay page
-  await page.goto(`${FRONTEND_URL}/dashboard/session-replay`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/session-replay`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(1500);
   await screenshot(page, 'module8-session-replay', 'Module 8');
 
@@ -761,7 +770,7 @@ async function module9(page) {
   test('All approvals list returns data', allRes.status === 200);
 
   // Browser: Navigate to approvals page
-  await page.goto(`${FRONTEND_URL}/dashboard/approvals`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/approvals`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(2000);
   await screenshot(page, 'module9-approvals', 'Module 9');
 
@@ -810,7 +819,7 @@ async function module10(page) {
   test('Get latest compliance report', reportRes.status === 200);
 
   // Browser: Navigate to compliance page
-  await page.goto(`${FRONTEND_URL}/dashboard/compliance`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/compliance`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(2000);
   await screenshot(page, 'module10-compliance', 'Module 10');
 
@@ -849,7 +858,7 @@ async function module11(page) {
   test('Get model stats', modelsRes.status === 200, `${JSON.stringify(modelsRes.data).slice(0, 300)}`);
 
   // Browser: Navigate to cost analytics page
-  await page.goto(`${FRONTEND_URL}/dashboard/cost-analytics`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/cost-analytics`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(2000);
   await screenshot(page, 'module11-cost-analytics', 'Module 11');
 
@@ -871,7 +880,7 @@ async function module12(page) {
   }
 
   // Navigate to settings in browser
-  await page.goto(`${FRONTEND_URL}/dashboard/settings`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.goto(`${FRONTEND_URL}/settings`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(1500);
   await screenshot(page, 'module12-settings', 'Module 12');
 
@@ -986,14 +995,15 @@ async function module14(page) {
     console.log(`  ${pass ? 'PASS' : 'FAIL'}: ${name}${detail ? ' — ' + detail : ''}`);
   }
 
-  // iPhone viewport
+  // iPhone viewport — re-login at mobile size so session is active
   await page.setViewportSize({ width: 375, height: 812 });
+  await browserLogin(page);
 
   const pages = [
     { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Events', path: '/dashboard/events' },
-    { name: 'Approvals', path: '/dashboard/approvals' },
-    { name: 'Agents', path: '/dashboard/agents' },
+    { name: 'Events', path: '/events' },
+    { name: 'Approvals', path: '/approvals' },
+    { name: 'Agents', path: '/agents' },
   ];
 
   for (const p of pages) {
@@ -1005,14 +1015,50 @@ async function module14(page) {
     await screenshot(page, `module14-mobile-${p.name.toLowerCase()}`, 'Module 14');
   }
 
-  // Test hamburger menu
-  const hamburger = await page.$('[aria-label*="menu"], button:has-text("☰"), .hamburger, [data-testid="mobile-menu"], button[aria-label="Toggle sidebar"]');
-  test('Hamburger menu button exists', !!hamburger);
+  // Test hamburger menu — already logged in at start of this module
+  await page.goto(`${FRONTEND_URL}/dashboard`, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+
+  // Debug: check what page we're actually on
+  const currentUrl = page.url();
+  const bodyText = await page.textContent('body').catch(() => '');
+  const isOnDashboard = currentUrl.includes('/dashboard') && !currentUrl.includes('/login');
+  console.log(`  [DEBUG] URL: ${currentUrl}, has dashboard content: ${bodyText.includes('Overview') || bodyText.includes('AgentLedger')}`);
+
+  const hamburger = await page.$('[data-testid="mobile-menu-toggle"], [aria-label="Open navigation menu"], [aria-label*="navigation menu"]');
+  test('Hamburger menu button exists', !!hamburger, `url=${currentUrl}, onDashboard=${isOnDashboard}`);
   if (hamburger) {
-    await hamburger.click().catch(() => {});
-    await page.waitForTimeout(500);
+    // Click using page.click for more reliable event dispatch
+    await page.click('[data-testid="mobile-menu-toggle"], [aria-label="Open navigation menu"]');
+    // Wait for React state update + CSS transition
+    await page.waitForTimeout(800);
     await screenshot(page, 'module14-mobile-menu-open', 'Module 14');
-    test('Hamburger menu opens', true);
+    // Check sidebar is visible — check both class and aria-expanded
+    const sidebarOpen = await page.evaluate(() => {
+      const sidebar = document.querySelector('.glass-sidebar');
+      const btn = document.querySelector('[data-testid="mobile-menu-toggle"]');
+      return {
+        hasOpenClass: sidebar?.classList.contains('sidebar-open'),
+        sidebarTransform: sidebar ? getComputedStyle(sidebar).transform : 'N/A',
+        ariaExpanded: btn?.getAttribute('aria-expanded'),
+      };
+    });
+    console.log(`  [DEBUG] sidebar state: ${JSON.stringify(sidebarOpen)}`);
+    test('Hamburger menu opens sidebar', sidebarOpen.hasOpenClass || sidebarOpen.ariaExpanded === 'true',
+      `class=${sidebarOpen.hasOpenClass}, aria=${sidebarOpen.ariaExpanded}, transform=${sidebarOpen.sidebarTransform}`);
+    // Check overlay appeared
+    const overlay = await page.$('.sidebar-overlay');
+    test('Overlay backdrop appears', !!overlay);
+    // Close by clicking outside the sidebar (sidebar is 240px wide, click at x=300)
+    if (overlay) {
+      await page.mouse.click(310, 400);
+      await page.waitForTimeout(500);
+      const closedState = await page.evaluate(() => {
+        const sidebar = document.querySelector('.glass-sidebar');
+        return !sidebar?.classList.contains('sidebar-open');
+      });
+      test('Sidebar closes on outside click', closedState);
+    }
   }
 
   // Reset viewport
@@ -1130,9 +1176,10 @@ async function module16(page) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: state.testEmail, password: state.testPassword }),
   });
-  const setCookies = loginRes.headers.get('set-cookie') || '';
-  test('Login sets refresh token cookie', setCookies.includes('refreshToken'));
-  test('Refresh token cookie is httpOnly', setCookies.includes('HttpOnly') || setCookies.includes('httponly'));
+  // Node.js fetch may return multiple set-cookie headers; use getSetCookie() if available
+  const setCookies = (loginRes.headers.getSetCookie?.() || [loginRes.headers.get('set-cookie') || '']).join('; ');
+  test('Login sets refresh token cookie', setCookies.includes('refreshToken'), `cookies: ${setCookies.slice(0, 200)}`);
+  test('Refresh token cookie is httpOnly', setCookies.toLowerCase().includes('httponly'), `cookies: ${setCookies.slice(0, 200)}`);
   test('CSRF token cookie set', setCookies.includes('csrf-token'));
 
   // API key is hashed (not returned in plaintext in list)

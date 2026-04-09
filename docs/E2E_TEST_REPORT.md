@@ -81,7 +81,7 @@ All screenshots saved to: `demo-screenshots/e2e/`
 | Bug ID | Module | Severity | Description | Expected | Actual | Status |
 |--------|--------|----------|-------------|----------|--------|--------|
 | BUG-001 | Module 13 | LOW | 100KB JSON payload accepted for single event field | 400 or 413 for oversized payload | 201 Created (accepted) | DEFERRED |
-| BUG-002 | Module 14 | MEDIUM | Hamburger menu button not found at 375px mobile viewport | Hamburger/menu toggle button with aria-label | No matching element found | OPEN |
+| BUG-002 | Module 14 | MEDIUM | E2E test used wrong URLs (/dashboard/agents instead of /agents) | Dashboard layout with hamburger | Next.js 404 error page | **FIXED** |
 | BUG-003 | Module 15 | LOW | GET /sessions response time slightly over 500ms target | < 500ms | 521ms | DEFERRED |
 | BUG-004 | Module 15 | LOW | GET /approvals response time at 500ms boundary | < 500ms | 500ms | DEFERRED |
 
@@ -91,10 +91,10 @@ All screenshots saved to: `demo-screenshots/e2e/`
 - The `MaxJsonSize(65536)` validator is per-field, but a single payload field with 100KB of data was accepted. The global body limit is 1MB (`json({ limit: '1mb' })` in main.ts). This is technically correct behavior since the payload is under 1MB, but individual field size limits could be tighter.
 - **Impact**: Low. The 1MB global limit still prevents abuse.
 
-**BUG-002: Missing hamburger menu button**
-- At 375px viewport, no element matching common hamburger menu selectors was found (`[aria-label*="menu"]`, `.hamburger`, `button:has-text("☰")`).
-- **Impact**: Medium. Mobile users cannot open the sidebar navigation.
-- **Fix**: Add a hamburger menu toggle button to the mobile layout that shows/hides the sidebar overlay.
+**BUG-002: E2E test URL mismatch (FIXED)**
+- The E2E test navigated to `/dashboard/agents`, `/dashboard/events`, etc. but actual routes are at `/agents`, `/events` (Next.js route group `(dashboard)` doesn't add to URL). This caused 404 error pages that don't have the dashboard layout.
+- The hamburger menu was always implemented correctly in `(dashboard)/layout.tsx` with `lg:hidden` visibility, overlay, animation, and Escape key support.
+- **Fix**: Corrected all E2E test URLs. Added `data-testid="mobile-menu-toggle"`, overlay fade animation, and body scroll lock. Hamburger now verified: button found, sidebar opens, overlay appears, closes on outside click.
 
 **BUG-003 & BUG-004: Marginal API response times**
 - GET /sessions (521ms) and GET /approvals (500ms) are at the boundary of the 500ms target. These are likely due to local dev environment variance and not a production concern.
@@ -245,7 +245,7 @@ All three compliance frameworks generate real reports from ingested event data.
 | Events at 375px | **PASS** | No overflow |
 | Approvals at 375px | **PASS** | No overflow |
 | Agents at 375px | **PASS** | No overflow |
-| Hamburger menu | **FAIL** | No toggle button found (BUG-002) |
+| Hamburger menu | **PASS** | Button found, opens sidebar, closes on outside click (BUG-002 FIXED) |
 
 ---
 
@@ -270,7 +270,7 @@ All three compliance frameworks generate real reports from ingested event data.
 *(None found)*
 
 ### HIGH - Fix this week
-1. **BUG-002: Mobile hamburger menu missing** - Users on mobile cannot navigate between dashboard sections. Need a sidebar toggle button.
+1. ~~BUG-002: Mobile hamburger menu missing~~ **FIXED** - Was a test URL issue; hamburger was always implemented. Added overlay animation, body scroll lock, and `data-testid`.
 
 ### MEDIUM - Fix this month
 2. **Dashboard sub-pages show Next.js error page** - When navigating to /dashboard/agents, /dashboard/sessions, etc. in headless browser without a valid session cookie, pages show the Next.js default error layout. The browser login flow needs to persist auth state properly for SSR pages.

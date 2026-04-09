@@ -64,6 +64,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.classList.add('sidebar-open-lock');
+    } else {
+      document.body.classList.remove('sidebar-open-lock');
+    }
+    return () => document.body.classList.remove('sidebar-open-lock');
+  }, [sidebarOpen]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" role="status">
@@ -175,6 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onClick={() => setSidebarOpen(true)}
               aria-label="Open navigation menu"
               aria-expanded={sidebarOpen}
+              data-testid="mobile-menu-toggle"
             >
               <Menu className="w-5 h-5" />
             </button>
