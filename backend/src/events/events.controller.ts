@@ -6,6 +6,8 @@ import {
   ApiBearerAuth,
   ApiSecurity,
 } from '@nestjs/swagger';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 import { EventsService } from './events.service';
 import { CombinedAuthGuard } from '../common/guards/combined-auth.guard';
 import { CreateEventsDto, CreateEventItemDto } from './dto/create-events.dto';
@@ -69,16 +71,38 @@ export class EventsController {
   @ApiResponse({ status: 201, description: 'Event(s) created and hashed.' })
   @ApiResponse({ status: 400, description: 'Validation error or batch limit exceeded.' })
   @ApiResponse({ status: 401, description: 'Unauthenticated.' })
-  create(@Req() req: AuthRequest, @Body() body: CreateEventsDto | CreateEventItemDto) {
-    // Support both single event and batch format
-    if ('events' in body && Array.isArray((body as CreateEventsDto).events)) {
-      if ((body as CreateEventsDto).events.length > 500) {
+  async create(@Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
+    // NestJS ValidationPipe cannot resolve union types (reflects as Object),
+    // so we validate manually after determining the shape.
+    if ('events' in body && Array.isArray(body.events)) {
+      const dto = plainToInstance(CreateEventsDto, body);
+      const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+      if (errors.length) {
+        const messages = this.flattenErrors(errors);
+        throw new BadRequestException(messages);
+      }
+      if (dto.events.length > 500) {
         throw new BadRequestException('events array must not contain more than 500 items');
       }
-      return this.eventsService.bulkCreate(req.user.orgId, body as CreateEventsDto);
+      return this.eventsService.bulkCreate(req.user.orgId, dto);
     }
-    // Single event — wrap in batch format
-    return this.eventsService.bulkCreate(req.user.orgId, { events: [body as CreateEventItemDto] });
+    // Single event — validate then wrap in batch format
+    const dto = plainToInstance(CreateEventItemDto, body);
+    const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+    if (errors.length) {
+      const messages = this.flattenErrors(errors);
+      throw new BadRequestException(messages);
+    }
+    return this.eventsService.bulkCreate(req.user.orgId, { events: [dto] });
+  }
+
+  private flattenErrors(errors: import('class-validator').ValidationError[]): string[] {
+    const messages: string[] = [];
+    for (const err of errors) {
+      if (err.constraints) messages.push(...Object.values(err.constraints));
+      if (err.children?.length) messages.push(...this.flattenErrors(err.children));
+    }
+    return messages;
   }
 
   @Get('verify')
