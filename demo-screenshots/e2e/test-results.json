@@ -1,0 +1,700 @@
+{
+  "executiveSummary": {
+    "healthScore": 97,
+    "modulesRun": 16,
+    "totalModules": 16,
+    "totalTests": 116,
+    "totalPassed": 112,
+    "totalFailed": 4,
+    "totalSkipped": 0,
+    "startTime": "2026-04-09T07:19:00.174Z",
+    "endTime": "2026-04-09T07:20:54.602Z",
+    "durationSeconds": 114
+  },
+  "modules": [
+    {
+      "name": "Module 1: Landing Page",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "details": [
+        "PASS: Landing page loads",
+        "PASS: Page load under 3 seconds",
+        "PASS: Hero section has headline text",
+        "PASS: Sign In link present",
+        "PASS: Get Started / Sign Up link present",
+        "PASS: SDK code tabs present",
+        "PASS: Code tabs are clickable",
+        "PASS: Pricing section present",
+        "PASS: Responsive 375px (iPhone) — no horizontal overflow",
+        "PASS: Responsive 768px (iPad) — no horizontal overflow",
+        "PASS: Responsive 1024px (Laptop) — no horizontal overflow",
+        "PASS: Responsive 1440px (Desktop) — no horizontal overflow"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 2: Authentication Flow",
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "details": [
+        "PASS: Signup returns 201",
+        "PASS: Signup returns access token",
+        "PASS: Signup returns user object",
+        "PASS: Signup sets CSRF token",
+        "PASS: Signup page renders form",
+        "PASS: Duplicate email returns 400/409",
+        "PASS: Login returns 200",
+        "PASS: Login returns access token",
+        "PASS: Login sets CSRF token",
+        "PASS: Login page renders form",
+        "PASS: Wrong password returns 401",
+        "PASS: Unauthenticated GET /agents returns 401",
+        "PASS: Forgot password page renders",
+        "PASS: Forgot password returns 200"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 3: Dashboard Overview",
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "details": [
+        "PASS: Dashboard page loads",
+        "PASS: Dashboard shows content (cards/welcome)",
+        "PASS: Agents page loads (/dashboard/agents)",
+        "PASS: Sessions page loads (/dashboard/sessions)",
+        "PASS: Events page loads (/dashboard/events)",
+        "PASS: Compliance page loads (/dashboard/compliance)",
+        "PASS: Approvals page loads (/dashboard/approvals)",
+        "PASS: Settings page loads (/dashboard/settings)"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 4: Agent Management",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "details": [
+        "PASS: Create agent \"gpt-4o-finance-bot\"",
+        "PASS: Create agent \"claude-support-agent\"",
+        "PASS: Create agent \"data-pipeline-worker\"",
+        "PASS: List agents returns data",
+        "PASS: Get agent detail",
+        "PASS: Agents page renders in browser"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 5: API Key Management",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "details": [
+        "PASS: Create API key 1",
+        "PASS: API key plaintext returned",
+        "PASS: Create API key 2",
+        "PASS: List API keys returns data",
+        "PASS: Plaintext key not in list response",
+        "PASS: Revoke API key 2"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 6: Event Ingestion via SDK",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "details": [
+        "PASS: Create session",
+        "PASS: Batch 1 — Finance bot (5 events)",
+        "PASS: Batch 2 — Support agent (4 events)",
+        "PASS: Create approval — wire transfer",
+        "PASS: Create approval — data deletion",
+        "PASS: Batch 5 — Stress test (100 events)"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 7: Events Explorer",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "details": [
+        "PASS: List events returns data",
+        "PASS: Events count >= 100 (stress test)",
+        "PASS: Filter by agent returns results",
+        "PASS: Filter by category=llm_call",
+        "PASS: Get single event",
+        "PASS: Event has hash field",
+        "PASS: Event has prevHash field",
+        "PASS: Hash chain verification endpoint works",
+        "PASS: Hash chain is VALID"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 8: Session Replay",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "details": [
+        "PASS: List sessions returns data",
+        "PASS: Sessions count >= 2",
+        "PASS: Get session detail",
+        "PASS: Session has events"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 9: Approval Queue",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "details": [
+        "PASS: List pending approvals",
+        "PASS: Approve wire transfer",
+        "PASS: Approval status is approved",
+        "PASS: Reject data deletion",
+        "PASS: Rejection status is rejected",
+        "PASS: All approvals list returns data"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 10: Compliance Reports",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "details": [
+        "PASS: Generate EU AI Act report",
+        "PASS: Generate SOC 2 report",
+        "PASS: Generate ISO 42001 report",
+        "PASS: Get compliance checks",
+        "PASS: Get latest compliance report"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 11: Cost Analytics",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "details": [
+        "PASS: Get cost breakdown",
+        "PASS: Get usage stats",
+        "PASS: Get model stats"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 12: Settings",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "details": [
+        "PASS: Settings page loads",
+        "PASS: Settings has form content"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "Module 13: Edge Cases and Error Handling",
+      "tests": 10,
+      "passed": 9,
+      "failed": 1,
+      "details": [
+        "PASS: Invalid API key → 401",
+        "PASS: No auth → 401",
+        "PASS: Batch 501 events → 400",
+        "FAIL: 100KB payload → 400 or 413 — got 201",
+        "PASS: IDOR — guessed UUID → 404 or 403",
+        "PASS: SQL injection in filter → safe handling (400)",
+        "PASS: Rate limiting triggers on rapid requests",
+        "PASS: XSS in agent name → sanitized (400) or stripped",
+        "PASS: Missing required fields → 400",
+        "PASS: Invalid JSON → 400"
+      ],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 14: Mobile Responsive Testing",
+      "tests": 5,
+      "passed": 4,
+      "failed": 1,
+      "details": [
+        "PASS: Mobile Dashboard — no horizontal overflow",
+        "PASS: Mobile Events — no horizontal overflow",
+        "PASS: Mobile Approvals — no horizontal overflow",
+        "PASS: Mobile Agents — no horizontal overflow",
+        "FAIL: Hamburger menu button exists — "
+      ],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 15: Performance Metrics",
+      "tests": 11,
+      "passed": 9,
+      "failed": 2,
+      "details": [
+        "PASS: GET /events (100+) under 500ms",
+        "FAIL: GET /sessions under 500ms — 521ms",
+        "PASS: GET /agents under 500ms",
+        "PASS: GET /analytics/cost under 500ms",
+        "PASS: GET /analytics/usage under 500ms",
+        "PASS: GET /compliance/checks under 500ms",
+        "FAIL: GET /approvals under 500ms — 500ms",
+        "PASS: POST /events batch 50 under 2s",
+        "PASS: Hash chain verification under 5s",
+        "PASS: Landing Page Load under 3000ms",
+        "PASS: Dashboard Page Load under 3000ms"
+      ],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 16: Security During Testing",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "details": [
+        "PASS: CORS Access-Control-Allow-Origin present",
+        "PASS: No stack trace in error response",
+        "PASS: Rate limit headers present",
+        "PASS: Login sets refresh token cookie",
+        "PASS: Refresh token cookie is httpOnly",
+        "PASS: CSRF token cookie set",
+        "PASS: API key not leaked in list",
+        "PASS: Health endpoint returns minimal info",
+        "PASS: No sensitive data in console"
+      ],
+      "status": "PASS"
+    }
+  ],
+  "screenshots": [
+    {
+      "filename": "module1-landing-full.png",
+      "module": "Module 1",
+      "description": "module1-landing-full"
+    },
+    {
+      "filename": "module1-responsive-375px.png",
+      "module": "Module 1",
+      "description": "module1-responsive-375px"
+    },
+    {
+      "filename": "module1-responsive-768px.png",
+      "module": "Module 1",
+      "description": "module1-responsive-768px"
+    },
+    {
+      "filename": "module1-responsive-1024px.png",
+      "module": "Module 1",
+      "description": "module1-responsive-1024px"
+    },
+    {
+      "filename": "module1-responsive-1440px.png",
+      "module": "Module 1",
+      "description": "module1-responsive-1440px"
+    },
+    {
+      "filename": "module2-signup-page.png",
+      "module": "Module 2",
+      "description": "module2-signup-page"
+    },
+    {
+      "filename": "module2-login-page.png",
+      "module": "Module 2",
+      "description": "module2-login-page"
+    },
+    {
+      "filename": "module2-forgot-password.png",
+      "module": "Module 2",
+      "description": "module2-forgot-password"
+    },
+    {
+      "filename": "module3-dashboard-overview.png",
+      "module": "Module 3",
+      "description": "module3-dashboard-overview"
+    },
+    {
+      "filename": "module3-dashboard-final.png",
+      "module": "Module 3",
+      "description": "module3-dashboard-final"
+    },
+    {
+      "filename": "module4-agents-list.png",
+      "module": "Module 4",
+      "description": "module4-agents-list"
+    },
+    {
+      "filename": "module5-api-keys-page.png",
+      "module": "Module 5",
+      "description": "module5-api-keys-page"
+    },
+    {
+      "filename": "module7-events-list.png",
+      "module": "Module 7",
+      "description": "module7-events-list"
+    },
+    {
+      "filename": "module8-sessions-list.png",
+      "module": "Module 8",
+      "description": "module8-sessions-list"
+    },
+    {
+      "filename": "module8-session-replay.png",
+      "module": "Module 8",
+      "description": "module8-session-replay"
+    },
+    {
+      "filename": "module9-approvals.png",
+      "module": "Module 9",
+      "description": "module9-approvals"
+    },
+    {
+      "filename": "module10-compliance.png",
+      "module": "Module 10",
+      "description": "module10-compliance"
+    },
+    {
+      "filename": "module11-cost-analytics.png",
+      "module": "Module 11",
+      "description": "module11-cost-analytics"
+    },
+    {
+      "filename": "module12-settings.png",
+      "module": "Module 12",
+      "description": "module12-settings"
+    },
+    {
+      "filename": "module14-mobile-dashboard.png",
+      "module": "Module 14",
+      "description": "module14-mobile-dashboard"
+    },
+    {
+      "filename": "module14-mobile-events.png",
+      "module": "Module 14",
+      "description": "module14-mobile-events"
+    },
+    {
+      "filename": "module14-mobile-approvals.png",
+      "module": "Module 14",
+      "description": "module14-mobile-approvals"
+    },
+    {
+      "filename": "module14-mobile-agents.png",
+      "module": "Module 14",
+      "description": "module14-mobile-agents"
+    }
+  ],
+  "bugs": [],
+  "performance": [
+    {
+      "endpoint": "Landing Page Load",
+      "responseTime": 1357,
+      "target": 3000,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /auth/signup",
+      "responseTime": 1629,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "POST /auth/login",
+      "responseTime": 1932,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "Dashboard Page Load",
+      "responseTime": 1942,
+      "target": 3000,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /agents (gpt-4o-finance-bot)",
+      "responseTime": 194,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /agents (claude-support-agent)",
+      "responseTime": 209,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /agents (data-pipeline-worker)",
+      "responseTime": 192,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /agents",
+      "responseTime": 67,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /agents/:id",
+      "responseTime": 63,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /api-keys",
+      "responseTime": 196,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /api-keys",
+      "responseTime": 65,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /sessions",
+      "responseTime": 580,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "POST /events (batch 5)",
+      "responseTime": 1059,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "POST /events (batch 4)",
+      "responseTime": 1004,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "POST /approvals (wire transfer)",
+      "responseTime": 628,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "POST /approvals (data delete)",
+      "responseTime": 574,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "POST /events (batch 100 stress)",
+      "responseTime": 1177,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "GET /events (500 limit)",
+      "responseTime": 520,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "GET /events (filter by agent)",
+      "responseTime": 507,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "GET /events (filter by category)",
+      "responseTime": 454,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /events/:id",
+      "responseTime": 427,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /events/verify-chain",
+      "responseTime": 464,
+      "target": 1000,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /sessions",
+      "responseTime": 517,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "GET /sessions/:id",
+      "responseTime": 505,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "GET /approvals/pending",
+      "responseTime": 127,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "PATCH /approvals/:id/approve",
+      "responseTime": 320,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "PATCH /approvals/:id/reject",
+      "responseTime": 324,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /compliance/reports/generate (EU AI Act)",
+      "responseTime": 495,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /compliance/reports/generate (SOC 2)",
+      "responseTime": 152,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "POST /compliance/reports/generate (ISO 42001)",
+      "responseTime": 141,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /compliance/checks",
+      "responseTime": 65,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /compliance/report",
+      "responseTime": 63,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /analytics/cost",
+      "responseTime": 441,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /analytics/usage",
+      "responseTime": 441,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /analytics/models",
+      "responseTime": 451,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /events (100+)",
+      "responseTime": 7,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /sessions",
+      "responseTime": 521,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "GET /agents",
+      "responseTime": 431,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /analytics/cost",
+      "responseTime": 436,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /analytics/usage",
+      "responseTime": 438,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /compliance/checks",
+      "responseTime": 435,
+      "target": 500,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /approvals",
+      "responseTime": 500,
+      "target": 500,
+      "status": "FAIL"
+    },
+    {
+      "endpoint": "POST /events (batch 50)",
+      "responseTime": 1073,
+      "target": 2000,
+      "status": "PASS"
+    },
+    {
+      "endpoint": "GET /events/verify-chain (all events)",
+      "responseTime": 682,
+      "target": 5000,
+      "status": "PASS"
+    }
+  ],
+  "security": [
+    {
+      "check": "Auth bypass (invalid key)",
+      "result": "PASS"
+    },
+    {
+      "check": "XSS injection",
+      "result": "TESTED"
+    },
+    {
+      "check": "SQL injection",
+      "result": "TESTED"
+    },
+    {
+      "check": "IDOR (UUID guessing)",
+      "result": "TESTED"
+    },
+    {
+      "check": "Rate limiting",
+      "result": "TESTED"
+    },
+    {
+      "check": "CORS configuration",
+      "result": "PASS"
+    },
+    {
+      "check": "JWT cookie security",
+      "result": "PASS"
+    },
+    {
+      "check": "CSRF protection",
+      "result": "PASS"
+    }
+  ],
+  "state": {
+    "testEmail": "e2e-test-1775719140174@agentledger.dev",
+    "agentCount": 3,
+    "sessionCount": 2,
+    "approvalCount": 2
+  }
+}
